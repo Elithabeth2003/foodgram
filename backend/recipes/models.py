@@ -13,7 +13,7 @@ from foodgram.constants import (
     MAX_LENGTH_TEXT,
 )
 from .validators import (
-    ValidateUsername,
+    validate_username,
     validate_min_amount,
     validate_max_amount,
     validate_min_cooking_time,
@@ -26,7 +26,7 @@ class User(AbstractUser):
         verbose_name='Имя пользователя',
         unique=True,
         max_length=MAX_LENGTH_USERNAME,
-        validators=[ValidateUsername()]
+        validators=[validate_username]
     )
     email = models.EmailField(
         max_length=MAX_LENGTH_EMAIL_ADDRESS,

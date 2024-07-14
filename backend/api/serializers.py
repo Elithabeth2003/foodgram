@@ -1,4 +1,6 @@
+import re
 from rest_framework import serializers
+from django.core.exceptions import ValidationError
 from drf_extra_fields.fields import Base64ImageField
 from recipes.models import (
     User,
@@ -9,7 +11,6 @@ from recipes.models import (
     Favorite,
     ShoppingCart
 )
-from recipes.validators import ValidateUsername
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
@@ -26,10 +27,13 @@ class UserCreateSerializer(serializers.ModelSerializer):
             'password',
         )
         extra_kwargs = {'password': {'write_only': True}}
-        validators = [ValidateUsername()]
 
     def create(self, validated_data):
         """Создаёт нового пользователя c хешированием пароля."""
+        username = validated_data.get('username')
+        if not re.match(r'^[\w.@+-]+\Z', username):
+            raise ValidationError(
+                "Username can only contain letters, digits, and @/./+/-/_ characters.")
         user = User(
             email=validated_data.get('email'),
             username=validated_data.get('username'),
@@ -57,7 +61,6 @@ class UserSerializer(serializers.ModelSerializer):
             'avatar',
             'is_subscribed',
         )
-        validators = [ValidateUsername()]
 
     def get_is_subscribed(self, obj):
         """Проверяет подписку текущего пользователя на объект запроса."""

@@ -23,9 +23,10 @@ from .serializers import (
     SubscriptionsSerializer
 )
 from .permissions import ReadOnlyOrIsAuthenticatedOrAuthor
+from .mixins import DjoserPermissionsMethodsMixin
 
 
-class UserViewSet(DjoserUserViewSet):
+class UserViewSet(DjoserUserViewSet, DjoserPermissionsMethodsMixin):
 
     @action(
         detail=False,
@@ -44,7 +45,7 @@ class UserViewSet(DjoserUserViewSet):
             request.user.save()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(
+    """@action(
         detail=False,
         methods=['post'],
         permission_classes=[permissions.IsAuthenticated],
@@ -55,7 +56,7 @@ class UserViewSet(DjoserUserViewSet):
         serializer.is_valid(raise_exception=True)
         request.user.set_password(serializer.data['password'])
         request.user.save()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_204_NO_CONTENT)"""
 
     @action(
         detail=False,
