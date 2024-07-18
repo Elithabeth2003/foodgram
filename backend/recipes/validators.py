@@ -1,4 +1,3 @@
-import re
 from foodgram.constants import (
     MAX_AMOUNT_INGREDIENTS,
     MIN_AMOUNT_INGREDIENTS,
@@ -6,19 +5,6 @@ from foodgram.constants import (
     MAX_COOKING_TIME
 )
 from django.core.exceptions import ValidationError
-from django.conf import settings
-
-
-def validate_username(username):
-    """Проверка имени пользователя на соответствие шаблону."""
-    matching_chars = re.findall(r'^[\w.@+-]+\Z', username)
-    if matching_chars:
-        ''.join(set(matching_chars))
-        raise ValidationError(
-            f'Поле \'username\' содержит '
-            f'недопустимые символы: {set(matching_chars)}'
-        )
-    return username
 
 
 def validate_min_cooking_time(value):

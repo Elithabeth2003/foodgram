@@ -20,7 +20,7 @@ class TagAdmin(admin.ModelAdmin):
 class IngredientAdmin(admin.ModelAdmin):
     list_display = (
         'name',
-        'unit',
+        'measurement_unit',
     )
     search_fields = ('name',)
     list_per_page = INGREDIENTS_PER_PAGE

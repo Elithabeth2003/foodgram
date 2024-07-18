@@ -1,10 +1,12 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
+from django.http import HttpResponse
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
+from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet as DjoserUserViewSet
+from django.db.models import Sum, F
 from recipes.models import (
-    User,
     Tag,
     Ingredient,
     Recipe,
@@ -12,7 +14,6 @@ from recipes.models import (
     ShoppingCart
 )
 from .serializers import (
-    UserCreateSerializer,
     UserSerializer,
     AvatarSerializer,
     RecipeSerializer,
@@ -24,9 +25,23 @@ from .serializers import (
 )
 from .permissions import ReadOnlyOrIsAuthenticatedOrAuthor
 from .mixins import DjoserPermissionsMethodsMixin
+from .paginators import PaginatorWithLimit
+from foodgram.constants import PDF_FILENAME, SHORT_LINK_URL_PATH
+from .filters import RecipeFilter, IngredientFilter
+from .utils import generate_pdf
 
 
 class UserViewSet(DjoserUserViewSet, DjoserPermissionsMethodsMixin):
+    pagination_class = PaginatorWithLimit
+
+    @action(
+        detail=False,
+        permission_classes=[permissions.IsAuthenticated],
+        url_path='me'
+    )
+    def me(self, request):
+        serializer = UserSerializer(request.user, context={'request': request})
+        return Response(serializer.data)
 
     @action(
         detail=False,
@@ -111,46 +126,41 @@ class UserViewSet(DjoserUserViewSet, DjoserPermissionsMethodsMixin):
             )
 
 
-class TagViewSet(viewsets.ModelViewSet):
+class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = [permissions.AllowAny]
 
 
-class IngredientViewSet(viewsets.ModelViewSet):
+class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
+    filter_backends = (DjangoFilterBackend,)
     permission_classes = [permissions.AllowAny]
+    filterset_class = IngredientFilter
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all().order_by('-pub_date')
     serializer_class = RecipeSerializer
+    pagination_class = PaginatorWithLimit
     permission_classes = [ReadOnlyOrIsAuthenticatedOrAuthor]
-
-    def get_queryset(self):
-        queryset = Recipe.objects.all().order_by('-pub_date')
-        tags = self.request.query_params.getlist('tags')
-        if tags:
-            queryset = queryset.filter(tags__id__in=tags).distinct()
-        return queryset
-
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
-
-    #def perform_update(self, serializer):
-        #serializer.save(author=self.request.user)
+    filterset_class = RecipeFilter
 
     @action(
         detail=True,
-        methods=['post'],
         permission_classes=[permissions.IsAuthenticated],
         url_path='get-link'
     )
     def get_link(self, request, pk=None):
-        recipe = self.get_object()
+        recipe = get_object_or_404(Recipe, pk=pk)
         return Response(
-            {'link': f'/recipes/{recipe.pk}/'}, status=status.HTTP_200_OK
+            {
+                'short-link': request.build_absolute_uri(
+                    f'/{SHORT_LINK_URL_PATH}/{recipe.short_url}/'
+                )
+            },
+            status=status.HTTP_200_OK,
         )
 
     @action(
@@ -192,10 +202,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
         url_path='download_shopping_cart'
     )
     def download_shopping_cart(self, request):
+        """Возвращает список покупок в формате PDF."""
         user = request.user
-        shopping_cart = user.shopping_cart.all()
-        # Generate and return the shopping cart file content as needed
-        return Response({'status': 'Download shopping cart'}, status=status.HTTP_200_OK)
+        ingredients = (
+            Ingredient.objects.filter(recipe__recipe__in_carts__user=user)
+            .values('name', measurement=F('measurement_unit'))
+            .annotate(amount=Sum('recipe__amount'))
+        )
+
+        pdf_buffer = generate_pdf(ingredients)
+
+        response = HttpResponse(pdf_buffer, content_type='application/pdf')
+        response['Content-Disposition'] = (
+            f'attachment; filename={PDF_FILENAME}'
+        )
+        return response
 
     @action(
         detail=True,

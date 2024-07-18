@@ -20,3 +20,10 @@ class ReadOnlyOrIsAuthenticatedOrAuthor(permissions.BasePermission):
             request.method in permissions.SAFE_METHODS
             or obj.author == request.user
         )
+
+
+class IsAdminOrReadOnly(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
+            return request.user.is_authenticated and request.user.is_admin
+        return True

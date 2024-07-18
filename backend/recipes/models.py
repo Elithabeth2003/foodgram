@@ -13,12 +13,12 @@ from foodgram.constants import (
     MAX_LENGTH_TEXT,
 )
 from .validators import (
-    validate_username,
     validate_min_amount,
     validate_max_amount,
     validate_min_cooking_time,
     validate_max_cooking_time
 )
+from .utils import get_hashed_short_url
 
 
 class User(AbstractUser):
@@ -26,7 +26,6 @@ class User(AbstractUser):
         verbose_name='Имя пользователя',
         unique=True,
         max_length=MAX_LENGTH_USERNAME,
-        validators=[validate_username]
     )
     email = models.EmailField(
         max_length=MAX_LENGTH_EMAIL_ADDRESS,
@@ -120,7 +119,7 @@ class Ingredient(models.Model):
         verbose_name='Ингредиент',
         max_length=MAX_LENGTH_NAME,
     )
-    unit = models.CharField(
+    measurement_unit = models.CharField(
         verbose_name='Единицы измерения',
         max_length=MAX_LENGTH_UNIT,
     )
@@ -131,13 +130,13 @@ class Ingredient(models.Model):
         ordering = ('name',)
         constraints = (
             models.UniqueConstraint(
-                fields=('name', 'unit',),
+                fields=('name', 'measurement_unit',),
                 name='unique_ingredient_name_unit',
             ),
         )
 
     def __str__(self):
-        return f'{self.name} ({self.unit})'
+        return f'{self.name} ({self.measurement_unit})'
 
 
 class Recipe(models.Model):
@@ -193,6 +192,11 @@ class Recipe(models.Model):
     def __str__(self):
         return self.name[:MAX_LENGTH_NAME]
 
+    @property
+    def short_url(self):
+        short_url = get_hashed_short_url(self.id)
+        return short_url
+
 
 class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(
@@ -224,7 +228,7 @@ class RecipeIngredient(models.Model):
         )
 
     def __str__(self):
-        return (f'{self.amount} {self.ingredient.unit} из '
+        return (f'{self.amount} {self.ingredient.measurement_unit} из '
                 f'{self.ingredient.name} для {self.recipe.name}')
 
 

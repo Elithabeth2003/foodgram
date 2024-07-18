@@ -5,6 +5,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
+from hashids import Hashids
 
 from foodgram.constants import (
     FONT_SIZE_HEADER,
@@ -12,8 +13,23 @@ from foodgram.constants import (
     INDENT_TOP_REGULAR,
     INDENT_LEFT_REGULAR,
     INDENT_AFTER_HEADER,
-    INDENT_BETWEEN_INGREDIENTS
+    INDENT_BETWEEN_INGREDIENTS,
+    MIN_LENGTH_FOR_SHORT_URL,
+    SALT
 )
+
+
+hashids = Hashids(min_length=MIN_LENGTH_FOR_SHORT_URL, salt=SALT)
+
+
+def get_hashed_short_url(value):
+    """Возвращает хешированный url адрес."""
+    return hashids.encode(value)
+
+
+def get_decoded_short_url(value):
+    """Возвращает декодированный url адрес."""
+    return hashids.decode(value)
 
 
 def generate_pdf(ingredients):
