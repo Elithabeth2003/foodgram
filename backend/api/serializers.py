@@ -39,8 +39,9 @@ class UserCreateSerializer(serializers.ModelSerializer):
         username = validated_data.get('username')
         if not re.match(r'^[\w.@+-]+\Z', username):
             raise ValidationError(
-                'Для поля "username" не должны приниматься значения, '
-                'не соответствующие регулярному выражению "^[\w.@+-]+\Z"'
+                'Поле "username" должно содержать только буквы, '
+                'цифры и символы из набора @ . + - и не должно содержать '
+                'пробелы или другие специальные символы.'
             )
         user = User(
             email=validated_data.get('email'),
