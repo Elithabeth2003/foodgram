@@ -1,3 +1,5 @@
+import shortuuid
+
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
@@ -8,20 +10,22 @@ from foodgram.constants import (
     MAX_LENGTH_LAST_NAME,
     MAX_LENGTH_NAME,
     MAX_LENGTH_SLUG,
-    MAX_LENGTH_USERNAME,
-    MAX_LENGTH_UNIT,
     MAX_LENGTH_TEXT,
+    MAX_LENGTH_UNIT,
+    MAX_LENGTH_USERNAME,
 )
+
 from .validators import (
-    validate_min_amount,
     validate_max_amount,
+    validate_max_cooking_time,
+    validate_min_amount,
     validate_min_cooking_time,
-    validate_max_cooking_time
 )
-from .utils import get_hashed_short_url
 
 
 class User(AbstractUser):
+    """Модель пользователя."""
+
     username = models.CharField(
         verbose_name='Имя пользователя',
         unique=True,
@@ -60,6 +64,8 @@ class User(AbstractUser):
 
 
 class Subscriptions(models.Model):
+    """Модель подписки пользователя на других пользователей."""
+
     author = models.ForeignKey(
         User,
         verbose_name='Автор рецепта',
@@ -94,6 +100,8 @@ class Subscriptions(models.Model):
 
 
 class Tag(models.Model):
+    """Модель тега для рецептов."""
+
     name = models.CharField(
         verbose_name='Тэг',
         max_length=MAX_LENGTH_NAME,
@@ -115,6 +123,8 @@ class Tag(models.Model):
 
 
 class Ingredient(models.Model):
+    """Модель ингредиента для рецептов."""
+
     name = models.CharField(
         verbose_name='Ингредиент',
         max_length=MAX_LENGTH_NAME,
@@ -140,6 +150,8 @@ class Ingredient(models.Model):
 
 
 class Recipe(models.Model):
+    """Модель рецепта."""
+
     name = models.CharField(
         verbose_name='Название блюда',
         max_length=MAX_LENGTH_NAME
@@ -157,7 +169,7 @@ class Recipe(models.Model):
     )
     tags = models.ManyToManyField(
         Tag,
-        verbose_name='Тег',
+        verbose_name='Тэг',
     )
     text = models.TextField(
         verbose_name='Описание блюда',
@@ -176,6 +188,12 @@ class Recipe(models.Model):
         default=0,
         validators=[validate_min_cooking_time, validate_max_cooking_time],
     )
+    short_url = models.CharField(
+        max_length=10,
+        unique=True,
+        blank=True,
+        null=True
+    )
 
     class Meta:
         default_related_name = '%(class)ss'
@@ -189,16 +207,18 @@ class Recipe(models.Model):
             ),
         )
 
+    def save(self, *args, **kwargs):
+        if not self.short_url:
+            self.short_url = shortuuid.ShortUUID().random(length=10)
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.name[:MAX_LENGTH_NAME]
 
-    @property
-    def short_url(self):
-        short_url = get_hashed_short_url(self.id)
-        return short_url
-
 
 class RecipeIngredient(models.Model):
+    """Модель связи рецепта и ингредиента."""
+
     recipe = models.ForeignKey(
         Recipe,
         verbose_name='Связанные ингредиенты',
@@ -233,6 +253,8 @@ class RecipeIngredient(models.Model):
 
 
 class TagRecipe(models.Model):
+    """ Модель связи тега и рецепта."""
+
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
 
@@ -241,6 +263,8 @@ class TagRecipe(models.Model):
 
 
 class Favorite(models.Model):
+    """Модель избранных рецептов пользователя."""
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -274,6 +298,8 @@ class Favorite(models.Model):
 
 
 class ShoppingCart(models.Model):
+    """Модель списка покупок пользователя."""
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         verbose_name='Владелец списка',

@@ -1,35 +1,21 @@
-from django_filters import (
-    CharFilter,
-    NumberFilter,
-    FilterSet,
-)
-from django.db.models import Q
-
+import django_filters
 from recipes.models import Ingredient, Recipe, Tag
 
 
-class RecipeFilter(FilterSet):
+class RecipeFilter(django_filters.FilterSet):
     """Список фильтров для рецептов."""
 
-    author = NumberFilter(field_name="author__id")
-    tags = CharFilter(method="filter_tags")
-    is_favorited = NumberFilter(method="filter_is_favorited")
-    is_in_shopping_cart = NumberFilter(method="filter_is_in_shopping_cart")
-
-    def filter_tags(self, queryset, name, value):
-        """Возвращает рецепты по фильтру "теги" если они существуют."""
-        if not value:
-            return queryset
-
-        tags = value.split(",")
-        existing_tags = Tag.objects.filter(slug__in=tags)
-        if not existing_tags.exists():
-            return queryset.none()
-
-        q_objects = Q()
-        for tag in existing_tags:
-            q_objects |= Q(tags__slug=tag.slug)
-        return queryset.filter(q_objects).distinct()
+    author = django_filters.NumberFilter(field_name='author__id')
+    is_favorited = django_filters.NumberFilter(method='filter_is_favorited')
+    is_in_shopping_cart = django_filters.NumberFilter(
+        method='filter_is_in_shopping_cart'
+    )
+    tags = django_filters.ModelMultipleChoiceFilter(
+        field_name='tags__slug',
+        to_field_name='slug',
+        queryset=Tag.objects.all(),
+        conjoined=False
+    )
 
     def filter_is_favorited(self, queryset, name, value):
         """Возвращает рецепты по фильтру "в избранном"."""
@@ -45,20 +31,22 @@ class RecipeFilter(FilterSet):
         value = bool(value)
         if value:
             if self.request.user.is_authenticated:
-                return queryset.filter(in_carts__user=self.request.user)
+                return queryset.filter(shoppingcarts__user=self.request.user)
             return queryset.none()
         return queryset
 
     class Meta:
         model = Recipe
-        fields = ("author", "tags", "is_favorited", "is_in_shopping_cart")
+        fields = ('author', 'is_favorited', 'is_in_shopping_cart', 'tags')
 
 
-class IngredientFilter(FilterSet):
+class IngredientFilter(django_filters.FilterSet):
     """Фильтр по названию для ингредиентов."""
 
-    name = CharFilter(field_name="name", lookup_expr="icontains")
+    name = django_filters.CharFilter(
+        field_name='name', lookup_expr='icontains'
+    )
 
     class Meta:
         model = Ingredient
-        fields = ("name",)
+        fields = ('name',)

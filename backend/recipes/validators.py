@@ -1,10 +1,11 @@
+from django.core.exceptions import ValidationError
+
 from foodgram.constants import (
     MAX_AMOUNT_INGREDIENTS,
     MIN_AMOUNT_INGREDIENTS,
     MIN_COOKING_TIME,
     MAX_COOKING_TIME
 )
-from django.core.exceptions import ValidationError
 
 
 def validate_min_cooking_time(value):

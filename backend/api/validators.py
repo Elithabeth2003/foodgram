@@ -9,9 +9,7 @@ def get_values_from_ingredients(ingredients, key):
         ]
     except TypeError:
         raise serializers.ValidationError(
-            'Поле ингредиенты должен быть списком словарей! '
-            'В словаре должны быть значения ingredient id и '
-            ' amount! Например [{"id": 1123, "amount": 10}].'
+            'Поле ингредиенты должен быть списком словарей!'
         )
     except ValueError:
         raise serializers.ValidationError(
