@@ -183,7 +183,7 @@ class Recipe(models.Model):
         validators=[
             MaxValueValidator(MAX_COOKING_TIME),
             MinValueValidator(MIN_COOKING_TIME)
-            ]
+        ]
     )
     slug_for_short_url = models.CharField(
         verbose_name='Слаг для короткой ссылки',
@@ -233,7 +233,7 @@ class RecipeIngredient(models.Model):
         validators=[
             MaxValueValidator(MAX_AMOUNT_INGREDIENTS),
             MinValueValidator(MIN_AMOUNT_INGREDIENTS)
-            ]
+        ]
     )
 
     class Meta:

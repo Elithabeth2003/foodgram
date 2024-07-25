@@ -7,7 +7,9 @@ class Command(BaseCommand):
     help = 'Импорт продуктов из data/ingredients.json'
 
     def handle(self, *args, **kwargs):
-        with open('D:/Dev/foodgram/data/ingredients.json', 'r', encoding='utf-8') as file:
+        with open(
+            'D:/Dev/foodgram/data/ingredients.json', 'r', encoding='utf-8'
+        ) as file:
             data = json.load(file)
 
         ingredients = [

@@ -209,12 +209,12 @@ class RecipeSerializer(serializers.ModelSerializer):
     def set_ingredients(self, recipe, ingredients):
         """Добавляет ингредиенты в промежуточную модель."""
         RecipeIngredient.objects.bulk_create(
-                RecipeIngredient(
-                    ingredient_id=ingredient.get('id'),
-                    amount=ingredient.get('amount'),
-                    recipe=recipe,
-                )
-                for ingredient in ingredients
+            RecipeIngredient(
+                ingredient_id=ingredient.get('id'),
+                amount=ingredient.get('amount'),
+                recipe=recipe,
+            )
+            for ingredient in ingredients
         )
 
     def create(self, validated_data):
