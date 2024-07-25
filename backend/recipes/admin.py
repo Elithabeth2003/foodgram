@@ -1,4 +1,7 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 from .models import (
     User,
@@ -8,14 +11,45 @@ from .models import (
     RecipeIngredient,
     Favorite,
     ShoppingCart,
-    TagRecipe
+)
+
+from .filters import (
+    HasRecipesFilter,
+    HasSubscriptionsFilter,
+    HasFollowersFilter,
+    CookingTimeFilter
 )
 
 
 @admin.register(User)
-class UserAdmin(admin.ModelAdmin):
-    list_display = ('username', 'email', 'first_name', 'last_name')
+class UserAdmin(BaseUserAdmin):
+    list_display = (
+        'username',
+        'email',
+        'first_name',
+        'last_name',
+        'recipe_count',
+        'subscription_count',
+        'follower_count'
+    )
     search_fields = ('email', 'username')
+    list_filter = (
+        HasRecipesFilter,
+        HasSubscriptionsFilter,
+        HasFollowersFilter,
+    )
+
+    @admin.display(description='Число рецептов')
+    def recipe_count(self, user):
+        return user.recipes.count()
+
+    @admin.display(description='Число подписок')
+    def subscription_count(self, user):
+        return user.following.count()
+
+    @admin.display(description='Число подписчиков')
+    def follower_count(self, user):
+        return user.followers.count()
 
 
 @admin.register(Subscriptions)
@@ -26,36 +60,73 @@ class SubscriptionsAdmin(admin.ModelAdmin):
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    list_display = ('name', 'slug')
+    list_display = ('name', 'slug', 'recipe_count')
     search_fields = ('name',)
 
-
-@admin.register(TagRecipe)
-class TagRecipeAdmin(admin.ModelAdmin):
-    list_display = ('tag', 'recipe')
+    @admin.display(description='Число рецептов')
+    def recipe_count(self, tag):
+        return tag.recipes.count()
 
 
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
-    list_display = ('name', 'measurement_unit')
-    search_fields = ('name',)
+    list_display = ('name', 'measurement_unit', 'recipe_count')
+    search_fields = ('name', 'measurement_unit')
+    list_filter = ('measurement_unit',)
+
+    @admin.display(description='Число рецептов')
+    def recipe_count(self, ingredient):
+        return ingredient.recipeingredients.count()
 
 
-@admin.register(RecipeIngredient)
-class RecipeIngredientAdmin(admin.ModelAdmin):
-    list_display = ('recipe', 'ingredient', 'amount')
+class RecipeIngredientInline(admin.TabularInline):
+    model = RecipeIngredient
+    extra = 1
 
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = ('name', 'author')
-    search_fields = ('name', 'author__username')
-    list_filter = ('tags',)
+    list_display = (
+        'name',
+        'author',
+        'cooking_time',
+        'display_tags',
+        'display_ingredients',
+        'display_image',
+        'favorite_count'
+    )
+    search_fields = ('name', 'author__username', 'tags__name')
+    list_filter = ('tags', CookingTimeFilter)
     readonly_fields = ('favorite_count',)
 
-    def favorite_count(self, obj):
-        return obj.favorite_set.count()
-    favorite_count.short_description = 'Количество добавлений в избранное'
+    inlines = [RecipeIngredientInline]
+
+    @admin.display(description='Теги')
+    def display_tags(self, recipe):
+        return mark_safe('<br>'.join([tag.name for tag in recipe.tags.all()]))
+
+    @admin.display(description='Продукты')
+    def display_ingredients(self, recipe):
+        ingredients = []
+        for ingr in recipe.ingredients.all():
+            for recipe_ingr in RecipeIngredient.objects.filter(
+                recipe=recipe, ingredient=ingr
+            ):
+                ingredients.append(
+                    f'{ingr.name} '
+                    f'({ingr.measurement_unit}) - {recipe_ingr.amount}'
+                )
+            return mark_safe('<br>'.join(ingredients))
+
+    @admin.display(description='Изображение')
+    def display_image(self, recipe):
+        return format_html(
+            '<img src="{}" style="max-height: 100px;">', recipe.image.url
+        )
+
+    @admin.display(description='Количество добавлений в избранное')
+    def favorite_count(self, recipe):
+        return recipe.favorite_set.count()
 
 
 @admin.register(Favorite)
