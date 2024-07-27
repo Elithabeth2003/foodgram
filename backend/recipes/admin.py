@@ -39,15 +39,15 @@ class UserAdmin(BaseUserAdmin):
         HasFollowersFilter,
     )
 
-    @admin.display(description='Число рецептов')
+    @admin.display(description='Рецепты')
     def recipe_count(self, user):
         return user.recipes.count()
 
-    @admin.display(description='Число подписок')
+    @admin.display(description='Подписки')
     def subscription_count(self, user):
-        return user.following.count()
+        return user.authors.count()
 
-    @admin.display(description='Число подписчиков')
+    @admin.display(description='Подписчики')
     def follower_count(self, user):
         return user.followers.count()
 
@@ -102,21 +102,20 @@ class RecipeAdmin(admin.ModelAdmin):
     inlines = [RecipeIngredientInline]
 
     @admin.display(description='Теги')
+    @mark_safe
     def display_tags(self, recipe):
-        return mark_safe('<br>'.join([tag.name for tag in recipe.tags.all()]))
+        return '<br>'.join(tag.name for tag in recipe.tags.all())
 
     @admin.display(description='Продукты')
+    @mark_safe
     def display_ingredients(self, recipe):
-        ingredients = []
-        for ingr in recipe.ingredients.all():
+        return '<br>'.join(
+            f'{ingr.name} ({ingr.measurement_unit}) - {recipe_ingr.amount}'
+            for ingr in recipe.ingredients.all()
             for recipe_ingr in RecipeIngredient.objects.filter(
                 recipe=recipe, ingredient=ingr
-            ):
-                ingredients.append(
-                    f'{ingr.name} '
-                    f'({ingr.measurement_unit}) - {recipe_ingr.amount}'
-                )
-            return mark_safe('<br>'.join(ingredients))
+            )
+        )
 
     @admin.display(description='Изображение')
     def display_image(self, recipe):
@@ -124,7 +123,7 @@ class RecipeAdmin(admin.ModelAdmin):
             '<img src="{}" style="max-height: 100px;">', recipe.image.url
         )
 
-    @admin.display(description='Количество добавлений в избранное')
+    @admin.display(description='Избранное')
     def favorite_count(self, recipe):
         return recipe.favorite_set.count()
 

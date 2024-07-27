@@ -22,3 +22,10 @@ INDENT_BETWEEN_INGREDIENTS = 20
 
 PDF_FILENAME = "spisok_pokupok.pdf"
 SHORT_LINK_URL_PATH = "s"
+
+SHORT = 'short'
+MEDIUM = 'medium'
+LONG = 'long'
+
+MAX_TIME = 40
+MIN_TIME = 20

@@ -55,10 +55,9 @@ class UserViewSet(DjoserUserViewSet):
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data)
-        elif request.method == 'DELETE':
-            request.user.avatar = None
-            request.user.save()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        request.user.avatar = None
+        request.user.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=False,
@@ -69,7 +68,7 @@ class UserViewSet(DjoserUserViewSet):
         """
         Возвращает список пользователей, на которых подписан пользователь.
         """
-        subscriptions = User.objects.filter(subscriptions__user=request.user)
+        subscriptions = User.objects.filter(authors__user=request.user)
         page = self.paginate_queryset(subscriptions)
         if page is not None:
             serializer = SubscriptionsSerializer(
@@ -92,27 +91,25 @@ class UserViewSet(DjoserUserViewSet):
         """Подписка и отписка текущего пользователя от другого пользователя."""
         author = get_object_or_404(User, pk=id)
         user = request.user
-
         if user == author:
             raise ValidationError('Нельзя подписаться на самого себя.')
         if request.method == 'POST':
             _, created = Subscriptions.objects.get_or_create(
                 user=user, author=author
             )
-            if created:
-                serializer = SubscriptionsSerializer(
+            if not created:
+                raise ValidationError(
+                    'Вы уже подписаны на этого пользователя!'
+                )
+            return Response(
+                SubscriptionsSerializer(
                     author, context={'request': request}
-                )
-                return Response(
-                    serializer.data, status=status.HTTP_201_CREATED
-                )
-            raise ValidationError('Вы уже подписаны на этого пользователя!')
-
-        elif request.method == 'DELETE':
-            get_object_or_404(
-                Subscriptions, user=user, author=author
-            ).delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+                ).data, status=status.HTTP_201_CREATED
+            )
+        get_object_or_404(
+            Subscriptions, user=user, author=author
+        ).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TagViewSet(viewsets.ModelViewSet):
@@ -168,21 +165,18 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def download_shopping_cart(self, request):
         """Возвращает список покупок в формате PDF."""
         user = request.user
-        ingredients = (
+        pdf_buffer = generate_pdf(
             Ingredient.objects.filter(
                 recipeingredients__recipe__shoppingcarts__user=user
             )
             .values('name', measurement=F('measurement_unit'))
             .annotate(amount=Sum('recipeingredients__amount'))
         )
-
-        pdf_buffer = generate_pdf(ingredients)
-        response = FileResponse(pdf_buffer, content_type='application/pdf')
-        response['Content-Disposition'] = (
-            f'attachment; filename={PDF_FILENAME}'
+        return FileResponse(
+            pdf_buffer, content_type='application/pdf', headers={
+                'Content-Disposition': f'attachment; filename="{PDF_FILENAME}"'
+            }
         )
-
-        return response
 
     @staticmethod
     def shoppingcart_favorite_method(request, pk, model):

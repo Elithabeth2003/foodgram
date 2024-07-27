@@ -12,7 +12,6 @@ from recipes.models import (
     User,
 )
 from foodgram.constants import MIN_AMOUNT_INGREDIENTS
-from recipes.validators import validate_username
 
 
 class UserSerializer(DjoserUserSerializer):
@@ -24,29 +23,11 @@ class UserSerializer(DjoserUserSerializer):
     )
 
     class Meta(DjoserUserSerializer.Meta):
-        fields = DjoserUserSerializer.Meta.fields + (
-            'password',
+        fields = (
+            *DjoserUserSerializer.Meta.fields,
             'is_subscribed',
-            'avatar'
+            'avatar',
         )
-
-    def create(self, validated_data):
-        """Создает нового пользователя с хешированием пароля."""
-        username = validated_data.get('username')
-        email = validated_data.get('email')
-        validate_username(username)
-        if not email:
-            raise ValidationError('Поле "email" не может быть пустым.')
-
-        user = User(
-            email=validated_data.get('email'),
-            username=username,
-            first_name=validated_data.get('first_name'),
-            last_name=validated_data.get('last_name'),
-        )
-        user.set_password(validated_data.get('password'))
-        user.save()
-        return user
 
     def get_is_subscribed(self, user):
         """Проверяет подписку текущего пользователя на объект запроса."""
@@ -111,13 +92,12 @@ class SubscriptionsSerializer(serializers.ModelSerializer):
         """Переопределяет метод родительского класса."""
         return True
 
-    def get_recipes(self, obj):
+    def get_recipes(self, recipe):
         """Возращает рецепты согласно параметру "recipes_limit" в запросе."""
-        request = self.context.get('request')
-        recipes_limit = int(request.GET.get('recipes_limit', 10**10))
-        recipes = obj.recipes.all()[:recipes_limit]
         return ShortRecipeSerializer(
-            recipes, many=True, context=self.context
+            recipe.recipes.all()[:int(
+                self.context.get('request').GET.get('recipes_limit', 10**10)
+            )], many=True, context=self.context
         ).data
 
 
@@ -189,6 +169,40 @@ class RecipeSerializer(serializers.ModelSerializer):
             )
         return value
 
+    @staticmethod
+    def validate_items(items, model, field_name, min_amount=None):
+        if field_name == 'ingredients':
+            items_id_list = [int(item.get('id')) for item in items]
+        else:
+            items_id_list = [int(item) for item in items]
+        if len(items_id_list) != len(set(items_id_list)):
+            non_unique_ids = list(set([
+                item for item in items_id_list if items_id_list.count(item) > 1
+            ]))
+            raise serializers.ValidationError(
+                {field_name: f'Элементы с id {non_unique_ids}'
+                 ' должны быть уникальными!'}
+            )
+        existing_items = model.objects.filter(
+            id__in=items_id_list
+        ).values_list('id', flat=True)
+        missing_items = set(items_id_list) - set(existing_items)
+        if missing_items:
+            raise serializers.ValidationError(
+                {field_name: f'Элемент(ы) с id {missing_items} не существует!'}
+            )
+        if min_amount is not None and field_name == 'ingredients':
+            invalid_items = [
+                item.get('id') for item in items
+                if int(item.get('amount')) < min_amount
+            ]
+            if invalid_items:
+                raise serializers.ValidationError(
+                    {field_name: f'Количество элементов с id {invalid_items} '
+                     f'не может быть меньше {min_amount}.'}
+                )
+        return items
+
     def validate(self, data):
         """Проверяет поля теги и ингредиенты."""
         tags = self.initial_data.get('tags')
@@ -232,12 +246,11 @@ class RecipeSerializer(serializers.ModelSerializer):
         """Обновляет существующий рецепт."""
         ingredients_data = validated_data.pop('ingredients')
         tags_data = validated_data.pop('tags')
-        super().update(instance, validated_data)
         instance.save()
         instance.ingredients.clear()
         self.set_ingredients(instance, ingredients_data)
         instance.tags.set(tags_data)
-        return instance
+        return super().update(instance, validated_data)
 
     def get_is_favorited(self, recipe):
         """Проверяет, добавлен ли рецепт в избранное пользователем."""

@@ -9,6 +9,7 @@ colorama==0.4.6
 coreapi==2.3.3
 coreschema==0.0.4
 cryptography==42.0.8
+DAWG-Python==0.7.2
 defusedxml==0.8.0rc2
 diff-match-patch==20230430
 Django==3.2
@@ -17,6 +18,7 @@ django-templated-mail==1.1.1
 djangorestframework==3.15.1
 djangorestframework-simplejwt==4.8.0
 djoser==2.1.0
+docopt==0.6.2
 drf-extra-fields==3.7.0
 filetype==1.2.0
 flake8==5.0.4
@@ -40,6 +42,8 @@ pycparser==2.22
 pydocstyle==6.3.0
 pyflakes==2.5.0
 PyJWT==2.1.0
+pymorphy2==0.9.1
+pymorphy2-dicts-ru==2.4.417127.4579844
 pytest==6.2.4
 pytest-django==4.4.0
 pytest-pythonpath==0.7.3

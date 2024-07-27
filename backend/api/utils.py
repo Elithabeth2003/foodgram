@@ -1,7 +1,7 @@
 import io
 import os
 from datetime import datetime
-
+import pymorphy2
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -15,6 +15,13 @@ from foodgram.constants import (
     INDENT_LEFT_REGULAR,
     INDENT_TOP_REGULAR,
 )
+
+morph = pymorphy2.MorphAnalyzer()
+
+
+def get_correct_measurement(amount, measurement):
+    parsed_measurement = morph.parse(measurement)[0]
+    return parsed_measurement.make_agree_with_number(amount).word
 
 
 def generate_pdf(ingredients, recipes):
@@ -45,18 +52,16 @@ def generate_pdf(ingredients, recipes):
         if position_vertical < INDENT_TOP_REGULAR:
             pdf.showPage()
             position_vertical = height - INDENT_TOP_REGULAR
-
     position_vertical -= INDENT_AFTER_HEADER
     for ingredient in ingredients:
         name = ingredient.get('name').capitalize()
         measurement = ingredient.get('measurement')
         amount = ingredient.get('amount')
-        if measurement[-1] != 'а':
-            measurement += 'а'
+        correct_measurement = get_correct_measurement(amount, measurement)
         pdf.drawString(
             INDENT_LEFT_REGULAR,
             position_vertical,
-            f'{name}: {amount} {measurement}'
+            f'{name}: {amount} {correct_measurement}'
         )
         position_vertical -= INDENT_BETWEEN_INGREDIENTS
         if position_vertical < INDENT_TOP_REGULAR:
