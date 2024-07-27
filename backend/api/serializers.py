@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
 from drf_extra_fields.fields import Base64ImageField
 from djoser.serializers import UserSerializer as DjoserUserSerializer
 
