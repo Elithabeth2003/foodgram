@@ -1,13 +1,12 @@
 import io
 import os
 from datetime import datetime
-import pymorphy2
+
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
-
-from foodgram.constants import (
+from .constants import (
     FONT_SIZE_HEADER,
     FONT_SIZE_INGREDIENTS,
     INDENT_AFTER_HEADER,
@@ -15,13 +14,12 @@ from foodgram.constants import (
     INDENT_LEFT_REGULAR,
     INDENT_TOP_REGULAR,
 )
-
-morph = pymorphy2.MorphAnalyzer()
+from django.utils.translation import gettext as _
 
 
 def get_correct_measurement(amount, measurement):
-    parsed_measurement = morph.parse(measurement)[0]
-    return parsed_measurement.make_agree_with_number(amount).word
+    measurement_plural = measurement + 's'
+    return _(measurement_plural)
 
 
 def generate_pdf(ingredients, recipes):
@@ -29,10 +27,8 @@ def generate_pdf(ingredients, recipes):
     buffer = io.BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=letter)
     _, height = letter
-
     current_dir = os.path.dirname(__file__)
     font_path = os.path.join(current_dir, 'fonts/dejavusans.ttf')
-
     pdfmetrics.registerFont(TTFont('DejaVuSans', font_path))
     pdf.setFont('DejaVuSans', FONT_SIZE_HEADER)
     position_vertical = height - INDENT_TOP_REGULAR
@@ -44,16 +40,16 @@ def generate_pdf(ingredients, recipes):
     )
     position_vertical -= INDENT_AFTER_HEADER
     pdf.setFont('DejaVuSans', FONT_SIZE_INGREDIENTS)
-    for recipe in recipes:
+    for idx, recipe in enumerate(recipes, start=1):
         pdf.drawString(
-            INDENT_LEFT_REGULAR, position_vertical, f'Рецепт: {recipe}'
+            INDENT_LEFT_REGULAR, position_vertical, f'{idx}. Рецепт: {recipe}'
         )
         position_vertical -= INDENT_BETWEEN_INGREDIENTS
         if position_vertical < INDENT_TOP_REGULAR:
             pdf.showPage()
             position_vertical = height - INDENT_TOP_REGULAR
     position_vertical -= INDENT_AFTER_HEADER
-    for ingredient in ingredients:
+    for idx, ingredient in enumerate(ingredients, start=1):
         name = ingredient.get('name').capitalize()
         measurement = ingredient.get('measurement')
         amount = ingredient.get('amount')
@@ -61,7 +57,25 @@ def generate_pdf(ingredients, recipes):
         pdf.drawString(
             INDENT_LEFT_REGULAR,
             position_vertical,
-            f'{name}: {amount} {correct_measurement}'
+            f'{idx}. {name}: {amount} {correct_measurement}'
+        )
+        position_vertical -= INDENT_BETWEEN_INGREDIENTS
+        if position_vertical < INDENT_TOP_REGULAR:
+            pdf.showPage()
+            position_vertical = height - INDENT_TOP_REGULAR
+    position_vertical -= INDENT_AFTER_HEADER
+    pdf.setFont('DejaVuSans', FONT_SIZE_HEADER)
+    pdf.drawString(
+        INDENT_LEFT_REGULAR,
+        position_vertical,
+        'Рецепты:'
+    )
+    position_vertical -= INDENT_BETWEEN_INGREDIENTS
+    for recipe in recipes:
+        pdf.drawString(
+            INDENT_LEFT_REGULAR,
+            position_vertical,
+            f'Рецепт: {recipe}'
         )
         position_vertical -= INDENT_BETWEEN_INGREDIENTS
         if position_vertical < INDENT_TOP_REGULAR:

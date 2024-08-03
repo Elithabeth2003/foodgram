@@ -1,15 +1,20 @@
-from django.core.exceptions import ValidationError
 import re
+
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 
-def validate_username(username):
+def validate_username(self, username):
+    """Проверка имени пользователя на соответствие шаблону."""
     if username == settings.USER_PROFILE_URL:
         raise ValidationError(
-            f'Имя пользователя {settings.USER_PROFILE_URL} не разрешено.'
+            (f'Использовать имя {settings.USER_PROFILE_URL} '
+             'в качестве username запрещено!')
         )
-    if not re.match(r'^[\w.@+-]+\Z', username):
-        invalid_str = ''.join(set(re.findall(r'[^\w.@+-]', username)))
+    matching_chars = re.findall(r'[^\w.@+-]+', username)
+    if matching_chars:
+        ''.join(set(matching_chars))
         raise ValidationError(
-            f'Недопустимые символы в имени пользователя: {invalid_str}'
+            f'Поле \'username\' содержит '
+            f'недопустимые символы: {set(matching_chars)}'
         )

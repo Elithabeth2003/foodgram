@@ -17,7 +17,7 @@ from recipes.models import (
     Tag,
     User,
 )
-from foodgram.constants import PDF_FILENAME, SHORT_LINK_URL_PATH
+from .constants import PDF_FILENAME, SHORT_LINK_URL_PATH
 from .filters import IngredientFilter, RecipeFilter
 from .paginators import PaginatorWithLimit
 from .permissions import ReadOnlyOrAuthor
@@ -190,11 +190,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_201_CREATED
                 )
             raise ValidationError('Этот рецепт уже в списке покупок.')
-        elif request.method == 'DELETE':
-            get_object_or_404(
-                model, user=request.user, recipe=recipe
-            ).delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        get_object_or_404(
+            model, user=request.user, recipe=recipe
+        ).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=True,

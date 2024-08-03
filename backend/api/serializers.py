@@ -10,16 +10,13 @@ from recipes.models import (
     Tag,
     User,
 )
-from foodgram.constants import MIN_AMOUNT_INGREDIENTS
+from .constants import MIN_AMOUNT_INGREDIENTS
 
 
 class UserSerializer(DjoserUserSerializer):
     """Сериализатор для создания и представления пользователей."""
 
     is_subscribed = serializers.SerializerMethodField()
-    password = serializers.CharField(
-        write_only=True, style={'input_type': 'password'}, required=False
-    )
 
     class Meta(DjoserUserSerializer.Meta):
         fields = (
@@ -128,6 +125,9 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
     measurement_unit = serializers.CharField(
         source='ingredient.measurement_unit', read_only=True
     )
+    amount = serializers.IntegerField(
+        source='recipe.measurement_unit', read_only=True
+    )
 
     class Meta:
         model = RecipeIngredient
@@ -169,54 +169,50 @@ class RecipeSerializer(serializers.ModelSerializer):
         return value
 
     @staticmethod
-    def validate_items(items, model, field_name, min_amount=None):
-        if field_name == 'ingredients':
-            items_id_list = [int(item.get('id')) for item in items]
-        else:
-            items_id_list = [int(item) for item in items]
-        if len(items_id_list) != len(set(items_id_list)):
-            non_unique_ids = list(set([
-                item for item in items_id_list if items_id_list.count(item) > 1
-            ]))
+    def validate_items(items, model, field_name):
+        items_ids = [int(item) for item in items]
+        non_unique_ids = list(set([
+            item for item in items_ids if items_ids.count(item) > 1
+        ]))
+        if non_unique_ids:
             raise serializers.ValidationError(
                 {field_name: f'Элементы с id {non_unique_ids}'
-                 ' должны быть уникальными!'}
+                 ' не уникальны!'}
             )
         existing_items = model.objects.filter(
-            id__in=items_id_list
+            id__in=items_ids
         ).values_list('id', flat=True)
-        missing_items = set(items_id_list) - set(existing_items)
+        missing_items = set(items_ids) - set(existing_items)
         if missing_items:
             raise serializers.ValidationError(
                 {field_name: f'Элемент(ы) с id {missing_items} не существует!'}
             )
-        if min_amount is not None and field_name == 'ingredients':
-            invalid_items = [
-                item.get('id') for item in items
-                if int(item.get('amount')) < min_amount
-            ]
-            if invalid_items:
-                raise serializers.ValidationError(
-                    {field_name: f'Количество элементов с id {invalid_items} '
-                     f'не может быть меньше {min_amount}.'}
-                )
-        return items
 
     def validate(self, data):
         """Проверяет поля теги и ингредиенты."""
         tags = self.initial_data.get('tags')
         ingredients = self.initial_data.get('ingredients')
+        ingredients_ids = [item['id'] for item in ingredients]
         self.validate_items(
-            ingredients,
+            ingredients_ids,
             model=Ingredient,
             field_name='ingredients',
-            min_amount=MIN_AMOUNT_INGREDIENTS,
         )
         self.validate_items(
             tags,
             model=Tag,
             field_name='tags',
         )
+        invalid_ingredients = [
+            item.get('id') for item in ingredients
+            if int(item.get('amount')) < MIN_AMOUNT_INGREDIENTS
+        ]
+        if invalid_ingredients:
+            raise serializers.ValidationError(
+                {'ingredients':
+                 f'Количество элементов с id {invalid_ingredients}'
+                 f' не может быть меньше {MIN_AMOUNT_INGREDIENTS}.'}
+            )
         return data
 
     def set_ingredients(self, recipe, ingredients):

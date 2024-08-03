@@ -109,12 +109,13 @@ class RecipeAdmin(admin.ModelAdmin):
     @admin.display(description='Продукты')
     @mark_safe
     def display_ingredients(self, recipe):
+        ingredients = RecipeIngredient.objects.filter(
+            recipe=recipe
+        ).select_related('ingredient')
         return '<br>'.join(
-            f'{ingr.name} ({ingr.measurement_unit}) - {recipe_ingr.amount}'
-            for ingr in recipe.ingredients.all()
-            for recipe_ingr in RecipeIngredient.objects.filter(
-                recipe=recipe, ingredient=ingr
-            )
+            f'{ri.ingredient.name} '
+            f'({ri.ingredient.measurement_unit}) - {ri.amount}'
+            for ri in ingredients
         )
 
     @admin.display(description='Изображение')
@@ -125,7 +126,7 @@ class RecipeAdmin(admin.ModelAdmin):
 
     @admin.display(description='Избранное')
     def favorite_count(self, recipe):
-        return recipe.favorite_set.count()
+        return recipe.favorites.count()
 
 
 @admin.register(Favorite)

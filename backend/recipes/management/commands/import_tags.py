@@ -13,9 +13,7 @@ class Command(BaseCommand):
         file_path = os.path.join(base_dir, 'data', 'tags.json')
         with open(file_path, 'r', encoding='utf-8') as file:
             data = json.load(file)
-        tags = [
-            Tag(name=item['name'], slug=item['slug'])
-            for item in data
-        ]
-        Tag.objects.bulk_create(tags, ignore_conflicts=True)
+        Tag.objects.bulk_create([
+            Tag(**item) for item in data
+        ], ignore_conflicts=True)
         self.stdout.write(self.style.SUCCESS('Успешно импортированы теги'))

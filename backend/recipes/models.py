@@ -4,7 +4,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from foodgram.constants import (
+from .constants import (
     MAX_LENGTH_EMAIL_ADDRESS,
     MAX_LENGTH_FIRST_NAME,
     MAX_LENGTH_LAST_NAME,
@@ -122,7 +122,7 @@ class Ingredient(models.Model):
         max_length=MAX_LENGTH_NAME,
     )
     measurement_unit = models.CharField(
-        verbose_name='Единицы измерения',
+        verbose_name='Мера',
         max_length=MAX_LENGTH_UNIT,
     )
 
@@ -185,6 +185,8 @@ class Recipe(models.Model):
         verbose_name='Слаг для короткой ссылки',
         max_length=10,
         unique=True,
+        blank=True,
+        null=True,
     )
 
     class Meta:
@@ -200,6 +202,7 @@ class Recipe(models.Model):
         )
 
     def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
         if not self.slug_for_short_url:
             self.slug_for_short_url = str(self.id)
             super().save(*args, **kwargs)
@@ -213,12 +216,12 @@ class RecipeIngredient(models.Model):
 
     recipe = models.ForeignKey(
         Recipe,
-        verbose_name='Связанные рецепты',
+        verbose_name='Рецепты',
         on_delete=models.CASCADE
     )
     ingredient = models.ForeignKey(
         Ingredient,
-        verbose_name='Связанные продукты',
+        verbose_name='Продукты',
         on_delete=models.CASCADE
     )
     amount = models.IntegerField(

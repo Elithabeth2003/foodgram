@@ -6,7 +6,7 @@
 
 Находясь в папке infra, выполните команду docker-compose up. При выполнении этой команды контейнер frontend, описанный в docker-compose.yml, подготовит файлы, необходимые для работы фронтенд-приложения, а затем прекратит свою работу.
 
-По адресу http://localhost изучите фронтенд веб-приложения, а по адресу http://localhost/api/docs/ — спецификацию API.
+По [адресу](http://localhost) изучите фронтенд веб-приложения, а по [адресу](http://localhost/api/docs/) — спецификацию API.
 
 ## Автор
 
@@ -41,7 +41,7 @@
 
     ```bash
     git clone git@github.com:Elithabeth2003/foodgram.git
-    cd ваш-репозиторий
+    cd foodgram
     ```
 
 2. **Установите зависимости для бэкенда**:
@@ -52,6 +52,7 @@
     python -m venv venv
     source venv/bin/activate  # Для Unix/MacOS
     venv\Scripts\activate  # Для Windows
+    cd backend
     pip install -r requirements.txt
     ```
 

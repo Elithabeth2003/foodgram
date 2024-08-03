@@ -1,6 +1,13 @@
 from django.contrib import admin
-from foodgram.constants import (
-    SHORT, MEDIUM, LONG, MAX_TIME, MIN_TIME
+from django.db.models import Count
+
+from .constants import (
+    RANGE_1_START,
+    RANGE_1_END,
+    RANGE_2_START,
+    RANGE_2_END,
+    RANGE_3_START,
+    RANGE_3_END
 )
 
 
@@ -16,9 +23,13 @@ class HasRecipesFilter(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         if self.value() == 'yes':
-            return queryset.filter(recipes__isnull=False).distinct()
+            return queryset.annotate(
+                recipe_count=Count('recipes')
+            ).filter(recipe_count__gt=0)
         if self.value() == 'no':
-            return queryset.filter(recipes__isnull=True)
+            return queryset.annotate(
+                recipe_count=Count('recipes')
+            ).filter(recipe_count__exact=0)
 
 
 class HasSubscriptionsFilter(admin.SimpleListFilter):
@@ -33,9 +44,13 @@ class HasSubscriptionsFilter(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         if self.value() == 'yes':
-            return queryset.filter(following__isnull=False).distinct()
+            return queryset.annotate(
+                subscription_count=Count('following')
+            ).filter(subscription_count__gt=0)
         if self.value() == 'no':
-            return queryset.filter(following__isnull=True)
+            return queryset.annotate(
+                subscription_count=Count('following')
+            ).filter(subscription_count__exact=0)
 
 
 class HasFollowersFilter(admin.SimpleListFilter):
@@ -50,44 +65,50 @@ class HasFollowersFilter(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         if self.value() == 'yes':
-            return queryset.filter(followers__isnull=False).distinct()
+            return queryset.annotate(
+                follower_count=Count('followers')
+            ).filter(follower_count__gt=0)
         if self.value() == 'no':
-            return queryset.filter(followers__isnull=True)
+            return queryset.annotate(
+                follower_count=Count('followers')
+            ).filter(follower_count__exact=0)
 
 
 class CookingTimeFilter(admin.SimpleListFilter):
-    title = 'время приготовления'
+    title = 'Время готовки'
     parameter_name = 'cooking_time'
 
-    thresholds = {
-        SHORT: (None, MIN_TIME),
-        MEDIUM: (MIN_TIME, MAX_TIME),
-        LONG: (MAX_TIME, None)
-    }
+    COOKING_TIME_RANGES = [
+        (
+            RANGE_1_START, RANGE_1_END,
+            f'от {RANGE_1_START} минуты до {RANGE_1_END} минут'
+        ),
+        (
+            RANGE_2_START, RANGE_2_END,
+            f'от {RANGE_2_START} минуты до {RANGE_2_END} минут'
+        ),
+        (
+            RANGE_3_START, RANGE_3_END,
+            f'от {RANGE_3_START} минуты до {RANGE_3_END} минут'
+        ),
+    ]
 
     def lookups(self, request, model_admin):
         queryset = model_admin.get_queryset(request)
-        short_count = queryset.filter(cooking_time__lte=MIN_TIME).count()
-        medium_count = queryset.filter(
-            cooking_time__gt=MIN_TIME, cooking_time__lte=MAX_TIME
-        ).count()
-        long_count = queryset.filter(cooking_time__gt=MAX_TIME).count()
-        return (
-            (self.SHORT, f'быстрее 20 мин ({short_count})'),
-            (self.MEDIUM, f'от 20 до 40 мин ({medium_count})'),
-            (self.LONG, f'дольше 40 мин ({long_count})'),
-        )
+        return [
+            (f'{start}-{end}',
+             f'''{label} ({
+                queryset.filter(
+                    cooking_time__gte=start, cooking_time__lte=end
+                ).count()
+            })''')
+            for start, end, label in self.COOKING_TIME_RANGES
+        ]
 
     def queryset(self, request, queryset):
-        value = self.value()
-        if value in self.thresholds:
-            min_time, max_time = self.thresholds[value]
-            if min_time is not None and max_time is not None:
-                return queryset.filter(
-                    cooking_time__gte=min_time, cooking_time__lte=max_time
-                )
-            elif min_time is not None:
-                return queryset.filter(cooking_time__gte=min_time)
-            elif max_time is not None:
-                return queryset.filter(cooking_time__lte=max_time)
+        if self.value():
+            start, end = map(int, self.value().split('-'))
+            return queryset.filter(
+                cooking_time__gte=start, cooking_time__lte=end
+            )
         return queryset
