@@ -6,6 +6,7 @@ volumes:
   media:
 
 services:
+
   db:
     image: postgres:13
     volumes:
