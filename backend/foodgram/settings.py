@@ -13,9 +13,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'default-secret-key')
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 
-#ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
-
-ALLOWED_HOSTS = ['158.160.64.151', '127.0.0.1', 'localhost', 'cooker.sytes.net']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost',
