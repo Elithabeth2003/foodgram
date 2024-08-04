@@ -4,7 +4,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 
 
-def validate_username(self, username):
+def validate_username(username):
     """Проверка имени пользователя на соответствие шаблону."""
     if username == settings.USER_PROFILE_URL:
         raise ValidationError(
