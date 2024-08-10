@@ -17,6 +17,7 @@ class UserSerializer(DjoserUserSerializer):
     """Сериализатор для создания и представления пользователей."""
 
     is_subscribed = serializers.SerializerMethodField()
+    email = serializers.EmailField(required=True, allow_blank=False)
 
     class Meta(DjoserUserSerializer.Meta):
         fields = (

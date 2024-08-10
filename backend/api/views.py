@@ -2,7 +2,7 @@ from django.db.models import F, Sum
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from djoser.views import UserViewSet as DjoserUserViewSet
+from djoser import views as djoser_views
 from rest_framework import permissions, status, viewsets
 from rest_framework.exceptions import ValidationError
 from rest_framework.decorators import action
@@ -31,15 +31,13 @@ from .serializers import (
 from .utils import generate_pdf
 
 
-class UserViewSet(DjoserUserViewSet):
+class UserViewSet(djoser_views.UserViewSet):
     """ViewSet для управления пользователями."""
     pagination_class = PaginatorWithLimit
 
     def get_permissions(self):
-        if self.action == "retrieve":
-            return [permissions.AllowAny]
-        elif self.action == "me":
-            return [permissions.IsAuthenticated]
+        if self.action == "me":
+            self.permission_classes = [permissions.IsAuthenticated]
         return super().get_permissions()
 
     @action(
