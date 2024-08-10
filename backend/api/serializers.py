@@ -191,8 +191,9 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         """Проверяет поля теги и ингредиенты."""
-        tags = self.initial_data.get('tags')
+        tags = data.get('tags', [])
         ingredients = self.initial_data.get('ingredients')
+        tags_ids = [tag['id'] for tag in tags]
         ingredients_ids = [item['id'] for item in ingredients]
         self.validate_items(
             ingredients_ids,
@@ -200,7 +201,7 @@ class RecipeSerializer(serializers.ModelSerializer):
             field_name='ingredients',
         )
         self.validate_items(
-            tags,
+            tags_ids,
             model=Tag,
             field_name='tags',
         )
