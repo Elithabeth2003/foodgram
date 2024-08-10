@@ -140,7 +140,9 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     ingredients = RecipeIngredientSerializer(many=True)
     author = UserSerializer(read_only=True)
-    tags = TagSerializer(many=True)
+    tags = serializers.PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(), many=True
+    )
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
     image = Base64ImageField(required=True)
@@ -191,9 +193,8 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         """Проверяет поля теги и ингредиенты."""
-        tags = data.get('tags', [])
+        tags = self.initial_data.get('tags')
         ingredients = self.initial_data.get('ingredients')
-        tags_ids = [tag['id'] for tag in tags]
         ingredients_ids = [item['id'] for item in ingredients]
         self.validate_items(
             ingredients_ids,
@@ -201,7 +202,7 @@ class RecipeSerializer(serializers.ModelSerializer):
             field_name='ingredients',
         )
         self.validate_items(
-            tags_ids,
+            tags,
             model=Tag,
             field_name='tags',
         )
