@@ -18,7 +18,7 @@ from recipes.models import (
     Tag,
     User,
 )
-from .constants import PDF_FILENAME
+from .constants import TXT_FILENAME
 from .filters import IngredientFilter, RecipeFilter
 from .paginators import PaginatorWithLimit
 from .permissions import ReadOnlyOrAuthor
@@ -29,7 +29,7 @@ from .serializers import (
     SubscriptionsSerializer,
     TagSerializer,
 )
-from .utils import generate_pdf
+from .utils import generate_txt
 
 
 class UserViewSet(djoser_views.UserViewSet):
@@ -164,18 +164,20 @@ class RecipeViewSet(viewsets.ModelViewSet):
         url_path='download_shopping_cart'
     )
     def download_shopping_cart(self, request):
-        """Возвращает список покупок в формате PDF."""
+        """Возвращает список покупок в формате TXT."""
         user = request.user
-        pdf_buffer = generate_pdf(
+        txt_buffer = generate_txt(
             Ingredient.objects.filter(
                 recipeingredients__recipe__shoppingcarts__user=user
             )
             .values('name', measurement=F('measurement_unit'))
-            .annotate(amount=Sum('recipeingredients__amount'))
+            .annotate(amount=Sum('recipeingredients__amount')),
+            recipes=user.recipes.values_list('name', flat=True)
         )
         return FileResponse(
-            pdf_buffer, content_type='application/pdf', headers={
-                'Content-Disposition': f'attachment; filename="{PDF_FILENAME}"'
+            txt_buffer, content_type='text/plain', headers={
+                'Content-Disposition': f'attachment; '
+                f'filename="{TXT_FILENAME.replace(".pdf", ".txt")}"'
             }
         )
 
