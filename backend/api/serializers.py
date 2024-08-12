@@ -17,7 +17,6 @@ class UserSerializer(DjoserUserSerializer):
     """Сериализатор для создания и представления пользователей."""
 
     is_subscribed = serializers.SerializerMethodField()
-    email = serializers.EmailField(required=True, allow_blank=False)
 
     class Meta(DjoserUserSerializer.Meta):
         fields = (
@@ -27,13 +26,14 @@ class UserSerializer(DjoserUserSerializer):
         )
 
     def get_is_subscribed(self, user):
-        """Проверяет подписку текущего пользователя на объект запроса."""
         request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return Subscriptions.objects.filter(
+        return (
+            request and
+            request.user.is_authenticated and
+            Subscriptions.objects.filter(
                 user=request.user, author=user
             ).exists()
-        return False
+        )
 
 
 class AvatarSerializer(serializers.ModelSerializer):
@@ -62,32 +62,21 @@ class ShortRecipeSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'image', 'cooking_time')
 
 
-class SubscriptionsSerializer(serializers.ModelSerializer):
+class SubscriptionsSerializer(UserSerializer):
     """Сериализатор для подписок на авторов рецептов."""
 
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.IntegerField(
         source='recipes.count', read_only=True
     )
-    is_subscribed = serializers.SerializerMethodField()
 
-    class Meta:
+    class Meta(UserSerializer.Meta):
         model = User
         fields = (
-            'email',
-            'id',
-            'username',
-            'first_name',
-            'last_name',
-            'avatar',
-            'is_subscribed',
+            *UserSerializer.Meta.fields,
             'recipes',
             'recipes_count',
         )
-
-    def get_is_subscribed(self, subscribe):
-        """Переопределяет метод родительского класса."""
-        return True
 
     def get_recipes(self, recipe):
         """Возращает рецепты согласно параметру "recipes_limit" в запросе."""
@@ -173,22 +162,20 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def validate_items(items, model, field_name):
-        items_ids = [int(item) for item in items]
-        non_unique_ids = list(set([
-            item for item in items_ids if items_ids.count(item) > 1
-        ]))
-        if non_unique_ids:
-            raise serializers.ValidationError(
-                {field_name: f'Элементы с id {non_unique_ids}'
-                 ' не уникальны!'}
-            )
         existing_items = model.objects.filter(
-            id__in=items_ids
+            id__in=items
         ).values_list('id', flat=True)
-        missing_items = set(items_ids) - set(existing_items)
+        missing_items = set(items) - set(existing_items)
         if missing_items:
             raise serializers.ValidationError(
                 {field_name: f'Элемент(ы) с id {missing_items} не существует!'}
+            )
+        non_unique_ids = set(
+            item for item in items if items.count(item) > 1
+        )
+        if non_unique_ids:
+            raise serializers.ValidationError(
+                {field_name: f'Элементы с id {non_unique_ids} не уникальны!'}
             )
 
     def validate(self, data):
@@ -213,8 +200,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         if invalid_ingredients:
             raise serializers.ValidationError(
                 {'ingredients':
-                 f'Количество элементов с id {invalid_ingredients}'
-                 f' не может быть меньше {MIN_AMOUNT_INGREDIENTS}.'}
+                 f'Ингридиентов должно быть больше {MIN_AMOUNT_INGREDIENTS}.'}
             )
         return data
 
@@ -253,13 +239,15 @@ class RecipeSerializer(serializers.ModelSerializer):
     def get_is_favorited(self, recipe):
         """Проверяет, добавлен ли рецепт в избранное пользователем."""
         user = self.context.get('request').user
-        if user.is_authenticated:
-            return recipe.favorites.filter(user=user).exists()
-        return False
+        return (
+            user.is_authenticated
+            and recipe.favorites.filter(user=user).exists()
+        )
 
     def get_is_in_shopping_cart(self, recipe):
         """Проверяет, добавлен ли рецепт в список покупок пользователем."""
         user = self.context.get('request').user
-        if user.is_authenticated:
-            return recipe.shoppingcarts.filter(user=user).exists()
-        return False
+        return (
+            user.is_authenticated
+            and recipe.shoppingcarts.filter(user=user).exists()
+        )

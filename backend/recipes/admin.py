@@ -109,19 +109,17 @@ class RecipeAdmin(admin.ModelAdmin):
     @admin.display(description='Продукты')
     @mark_safe
     def display_ingredients(self, recipe):
-        ingredients = RecipeIngredient.objects.filter(
-            recipe=recipe
-        ).select_related('ingredient')
         return '<br>'.join(
             f'{ri.ingredient.name} '
             f'({ri.ingredient.measurement_unit}) - {ri.amount}'
-            for ri in ingredients
+            for ri in recipe.recipeingredient_set.all()
         )
 
     @admin.display(description='Изображение')
+    @mark_safe
     def display_image(self, recipe):
-        return format_html(
-            '<img src="{}" style="max-height: 100px;">', recipe.image.url
+        return '<img src="{}" style="max-height: 100px;">'.format(
+            recipe.image.url
         )
 
     @admin.display(description='Избранное')

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.db.models import Count
+from ast import literal_eval
 
 from .constants import (
     RANGE_1_START,
@@ -22,14 +22,9 @@ class HasRecipesFilter(admin.SimpleListFilter):
         )
 
     def queryset(self, request, queryset):
-        if self.value() == 'yes':
-            return queryset.annotate(
-                recipe_count=Count('recipes')
-            ).filter(recipe_count__gt=0)
-        if self.value() == 'no':
-            return queryset.annotate(
-                recipe_count=Count('recipes')
-            ).filter(recipe_count__exact=0)
+        if self.value() in ['yes', 'no']:
+            has_recipes = self.value() == 'yes'
+            return queryset.filter(recipes__isnull=not has_recipes)
 
 
 class HasSubscriptionsFilter(admin.SimpleListFilter):
@@ -43,14 +38,9 @@ class HasSubscriptionsFilter(admin.SimpleListFilter):
         )
 
     def queryset(self, request, queryset):
-        if self.value() == 'yes':
-            return queryset.annotate(
-                subscription_count=Count('following')
-            ).filter(subscription_count__gt=0)
-        if self.value() == 'no':
-            return queryset.annotate(
-                subscription_count=Count('following')
-            ).filter(subscription_count__exact=0)
+        if self.value() in ['yes', 'no']:
+            has_subscriptions = self.value() == 'yes'
+            return queryset.filter(following__isnull=not has_subscriptions)
 
 
 class HasFollowersFilter(admin.SimpleListFilter):
@@ -64,14 +54,9 @@ class HasFollowersFilter(admin.SimpleListFilter):
         )
 
     def queryset(self, request, queryset):
-        if self.value() == 'yes':
-            return queryset.annotate(
-                follower_count=Count('followers')
-            ).filter(follower_count__gt=0)
-        if self.value() == 'no':
-            return queryset.annotate(
-                follower_count=Count('followers')
-            ).filter(follower_count__exact=0)
+        if self.value() in ['yes', 'no']:
+            has_followers = self.value() == 'yes'
+            return queryset.filter(followers__isnull=not has_followers)
 
 
 class CookingTimeFilter(admin.SimpleListFilter):
@@ -81,34 +66,32 @@ class CookingTimeFilter(admin.SimpleListFilter):
     COOKING_TIME_RANGES = [
         (
             RANGE_1_START, RANGE_1_END,
-            f'от {RANGE_1_START} минуты до {RANGE_1_END} минут'
+            f'До {RANGE_1_END} минут'
         ),
         (
             RANGE_2_START, RANGE_2_END,
-            f'от {RANGE_2_START} минуты до {RANGE_2_END} минут'
+            f'От {RANGE_1_END} минуты до {RANGE_2_END} минут'
         ),
         (
             RANGE_3_START, RANGE_3_END,
-            f'от {RANGE_3_START} минуты до {RANGE_3_END} минут'
+            f'От {RANGE_2_END}'
         ),
     ]
 
     def lookups(self, request, model_admin):
         queryset = model_admin.get_queryset(request)
         return [
-            (f'{start}-{end}',
-             f'''{label} ({
-                queryset.filter(
-                    cooking_time__gte=start, cooking_time__lte=end
-                ).count()
-            })''')
+            (start, end,
+             f'{label} '
+             f'({self.get_filtered_queryset(queryset, start, end).count()})')
             for start, end, label in self.COOKING_TIME_RANGES
         ]
 
     def queryset(self, request, queryset):
         if self.value():
-            start, end = map(int, self.value().split('-'))
-            return queryset.filter(
-                cooking_time__gte=start, cooking_time__lte=end
-            )
+            start, end = literal_eval(self.value())
+            return self.get_filtered_queryset(queryset, start, end)
         return queryset
+
+    def get_filtered_queryset(self, queryset, start, end):
+        return queryset.filter(cooking_time__range=(start, end))

@@ -14,7 +14,7 @@ from .constants import (
     MAX_LENGTH_UNIT,
     MAX_LENGTH_USERNAME,
     MIN_COOKING_TIME,
-    MIN_AMOUNT_INGREDIENTS,
+    MIN_INGREDIENT_AMOUNT,
 )
 from .validators import validate_username
 
@@ -121,7 +121,7 @@ class Ingredient(models.Model):
         max_length=MAX_LENGTH_NAME,
     )
     measurement_unit = models.CharField(
-        verbose_name='Мера',
+        verbose_name='Единица измерения',
         max_length=MAX_LENGTH_UNIT,
     )
 
@@ -226,7 +226,7 @@ class RecipeIngredient(models.Model):
     amount = models.IntegerField(
         verbose_name='Количество',
         validators=[
-            MinValueValidator(MIN_AMOUNT_INGREDIENTS)
+            MinValueValidator(MIN_INGREDIENT_AMOUNT)
         ]
     )
 

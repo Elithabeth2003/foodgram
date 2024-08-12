@@ -13,7 +13,6 @@ def validate_username(username):
         )
     matching_chars = re.findall(r'[^\w.@+-]+', username)
     if matching_chars:
-        ''.join(set(matching_chars))
         raise ValidationError(
             f'Поле \'username\' содержит '
             f'недопустимые символы: {set(matching_chars)}'

@@ -1,5 +1,6 @@
 from django.db.models import F, Sum
 from django.http import FileResponse
+from django.urls import reverse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser import views as djoser_views
@@ -17,7 +18,7 @@ from recipes.models import (
     Tag,
     User,
 )
-from .constants import PDF_FILENAME, SHORT_LINK_URL_PATH
+from .constants import PDF_FILENAME
 from .filters import IngredientFilter, RecipeFilter
 from .paginators import PaginatorWithLimit
 from .permissions import ReadOnlyOrAuthor
@@ -36,8 +37,10 @@ class UserViewSet(djoser_views.UserViewSet):
     pagination_class = PaginatorWithLimit
 
     def get_permissions(self):
-        if self.action == "me":
-            self.permission_classes = [permissions.IsAuthenticated]
+        if self.action == 'retrieve':
+            return [permissions.AllowAny]
+        elif self.action == 'me':
+            return [permissions.IsAuthenticated]
         return super().get_permissions()
 
     @action(
@@ -145,11 +148,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def get_link(self, request, pk=None):
         """Получение короткой ссылки."""
-        short_url = get_object_or_404(Recipe, pk=pk).short_url
+        recipe = get_object_or_404(Recipe, pk=pk)
         return Response(
             {
                 'short-link': request.build_absolute_uri(
-                    f'/{SHORT_LINK_URL_PATH}/{short_url}/'
+                    reverse('recipes:shortlink', args=[recipe.pk])
                 )
             },
             status=status.HTTP_200_OK,
