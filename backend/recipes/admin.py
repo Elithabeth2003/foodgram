@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+from django.contrib.auth.models import Group
 
 from .models import (
     User,
@@ -19,6 +19,9 @@ from .filters import (
     HasFollowersFilter,
     CookingTimeFilter
 )
+
+
+admin.site.unregister(Group)
 
 
 @admin.register(User)
@@ -112,7 +115,7 @@ class RecipeAdmin(admin.ModelAdmin):
         return '<br>'.join(
             f'{ri.ingredient.name} '
             f'({ri.ingredient.measurement_unit}) - {ri.amount}'
-            for ri in recipe.recipeingredient_set.all()
+            for ri in recipe.recipeingredient.all()
         )
 
     @admin.display(description='Изображение')
