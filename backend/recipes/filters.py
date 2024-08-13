@@ -12,6 +12,7 @@ from .constants import (
 
 
 class HasRecipesFilter(admin.SimpleListFilter):
+    """Фильтрует пользователей по наличию у них рецептов."""
     title = 'Есть рецепты'
     parameter_name = 'has_recipes'
 
@@ -28,6 +29,7 @@ class HasRecipesFilter(admin.SimpleListFilter):
 
 
 class HasSubscriptionsFilter(admin.SimpleListFilter):
+    """Фильтрует пользователей по наличию у них подписок."""
     title = 'Есть подписки'
     parameter_name = 'has_subscriptions'
 
@@ -44,6 +46,7 @@ class HasSubscriptionsFilter(admin.SimpleListFilter):
 
 
 class HasFollowersFilter(admin.SimpleListFilter):
+    """Фильтрует пользователей по наличию у них подписчиков."""
     title = 'Есть подписчики'
     parameter_name = 'has_followers'
 
