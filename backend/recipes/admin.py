@@ -32,7 +32,8 @@ class UserAdmin(BaseUserAdmin):
         'last_name',
         'recipe_count',
         'subscription_count',
-        'follower_count'
+        'follower_count',
+        'avatar'
     )
     search_fields = ('email', 'username')
     list_filter = (
