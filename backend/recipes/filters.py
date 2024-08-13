@@ -84,7 +84,7 @@ class CookingTimeFilter(admin.SimpleListFilter):
     def lookups(self, request, model_admin):
         queryset = model_admin.get_queryset(request)
         return [
-            (start, end,
+            ((start, end),
              f'{label} '
              f'({self.get_filtered_queryset(queryset, start, end).count()})')
             for start, end, label in self.COOKING_TIME_RANGES
