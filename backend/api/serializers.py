@@ -28,9 +28,8 @@ class UserSerializer(DjoserUserSerializer):
     def get_is_subscribed(self, user):
         request = self.context.get('request')
         return (
-            request and
-            request.user.is_authenticated and
-            Subscriptions.objects.filter(
+            request and request.user.is_authenticated
+            and Subscriptions.objects.filter(
                 user=request.user, author=user
             ).exists()
         )
