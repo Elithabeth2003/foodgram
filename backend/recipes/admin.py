@@ -115,7 +115,7 @@ class RecipeAdmin(admin.ModelAdmin):
         return '<br>'.join(
             f'{ri.ingredient.name} '
             f'({ri.ingredient.measurement_unit}) - {ri.amount}'
-            for ri in recipe.recipeingredient.all()
+            for ri in recipe.recipeingredients.all()
         )
 
     @admin.display(description='Изображение')
