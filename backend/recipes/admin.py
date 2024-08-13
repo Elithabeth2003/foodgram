@@ -20,7 +20,6 @@ from .filters import (
     CookingTimeFilter
 )
 
-
 admin.site.unregister(Group)
 
 
