@@ -67,7 +67,7 @@ const Card = ({
           <div
             className={styles["card__author-image"]}
             style={{
-              "background-image": `url(${author.avatar || DefaultImage})`,
+              "background-image": `url(${author?.avatar || DefaultImage})`,
             }}
           />
           <div className={styles.card__author}>
