@@ -1,7 +1,9 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.utils.safestring import mark_safe
 from django.contrib.auth.models import Group
+from django.urls import reverse
+from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 
 from .models import (
     User,
@@ -44,15 +46,36 @@ class UserAdmin(BaseUserAdmin):
 
     @admin.display(description='Рецепты')
     def recipe_count(self, user):
-        return user.recipes.count()
+        count = user.recipes.count()
+        if count:
+            url = reverse(
+                'admin:recipes_recipe_changelist'
+            ) + f'?author__id={user.id}'
+            return format_html('<a href="{}">{}</a>', url, count)
+        return count
 
     @admin.display(description='Подписки')
     def subscription_count(self, user):
-        return user.authors.count()
+        count = user.authors.count()
+        if count:
+            url = reverse('admin:recipes_subscriptions_changelist')
+            return format_html('<a href="{}">{}</a>', url, count)
+        return count
 
     @admin.display(description='Подписчики')
     def follower_count(self, user):
-        return user.followers.count()
+        count = user.followers.count()
+        if count:
+            url = reverse('admin:recipes_subscriptions_changelist')
+            return format_html('<a href="{}">{}</a>', url, count)
+        return count
+
+    @admin.display(description='Аватар')
+    @mark_safe
+    def avatar_image(self, user):
+        return (
+            f'<img src="{user.avatar.url}" width="50" height="50" />'
+        )
 
 
 @admin.register(Subscriptions)
@@ -101,6 +124,7 @@ class RecipeAdmin(admin.ModelAdmin):
     search_fields = ('name', 'author__username', 'tags__name')
     list_filter = ('tags', CookingTimeFilter)
     readonly_fields = ('favorite_count',)
+    exclude = ('slug_for_short_url',)
 
     inlines = [RecipeIngredientInline]
 

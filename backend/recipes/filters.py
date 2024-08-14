@@ -69,15 +69,15 @@ class CookingTimeFilter(admin.SimpleListFilter):
     COOKING_TIME_RANGES = [
         (
             RANGE_1_START, RANGE_1_END,
-            f'До {RANGE_1_END} минут'
+            f'До {RANGE_1_END} мин'
         ),
         (
             RANGE_2_START, RANGE_2_END,
-            f'От {RANGE_1_END} минуты до {RANGE_2_END} минут'
+            f'От {RANGE_1_END} мин до {RANGE_2_END} мин'
         ),
         (
             RANGE_3_START, RANGE_3_END,
-            f'От {RANGE_2_END}'
+            f'От {RANGE_2_END} мин'
         ),
     ]
 

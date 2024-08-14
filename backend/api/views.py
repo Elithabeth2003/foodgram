@@ -1,3 +1,4 @@
+import io
 from django.db.models import F, Sum
 from django.http import FileResponse
 from django.urls import reverse
@@ -37,10 +38,8 @@ class UserViewSet(djoser_views.UserViewSet):
     pagination_class = PaginatorWithLimit
 
     def get_permissions(self):
-        if self.action == 'retrieve':
-            return [permissions.AllowAny]
-        elif self.action == 'me':
-            return [permissions.IsAuthenticated]
+        if self.action == 'me':
+            return [permissions.IsAuthenticated()]
         return super().get_permissions()
 
     @action(
@@ -165,20 +164,20 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def download_shopping_cart(self, request):
         """Возвращает список покупок в формате TXT."""
+
         user = request.user
-        txt_buffer = generate_txt(
-            Ingredient.objects.filter(
-                recipeingredients__recipe__shoppingcarts__user=user
-            )
-            .values('name', measurement=F('measurement_unit'))
-            .annotate(amount=Sum('recipeingredients__amount')),
-            recipes=user.recipes.values_list('name', flat=True)
+        ingredients = Ingredient.objects.filter(
+            recipeingredients__recipe__shoppingcarts__user=user
+        ).values('name', measurement=F('measurement_unit')).annotate(
+            amount=Sum('recipeingredients__amount')
         )
+        recipes = user.recipes.all()
+        txt_content = generate_txt(ingredients, recipes)
         return FileResponse(
-            txt_buffer, content_type='text/plain', headers={
-                'Content-Disposition': f'attachment; '
-                f'filename="{TXT_FILENAME.replace(".pdf", ".txt")}"'
-            }
+            io.StringIO(txt_content),
+            content_type='text/plain',
+            as_attachment=True,
+            filename=f'{TXT_FILENAME.replace(".pdf", ".txt")}'
         )
 
     @staticmethod
