@@ -73,8 +73,8 @@ class UserAdmin(BaseUserAdmin):
     @admin.display(description='Аватар')
     @mark_safe
     def avatar_image(self, user):
-        return (
-            f'<img src="{user.avatar.url}" width="50" height="50" />'
+        return '<img src="{}" width="50" height="50" />'.format(
+            user.avatar.url
         )
 
 
