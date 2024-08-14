@@ -200,12 +200,6 @@ class Recipe(models.Model):
             ),
         )
 
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        if not self.slug_for_short_url:
-            self.slug_for_short_url = str(self.id)
-            super().save(*args, **kwargs)
-
     def __str__(self):
         return self.name[:MAX_LENGTH_NAME]
 
