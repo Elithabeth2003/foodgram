@@ -44,7 +44,6 @@ class User(AbstractUser):
     avatar = models.ImageField(
         upload_to='users/images/',
         null=True,
-        default=None
     )
 
     USERNAME_FIELD = 'email'
