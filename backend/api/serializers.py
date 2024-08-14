@@ -44,14 +44,6 @@ class AvatarSerializer(serializers.ModelSerializer):
         model = User
         fields = ('avatar',)
 
-    def validate_avatar(self, avatar):
-        """Проверяет, что поле аватар не пустое."""
-        if not avatar:
-            raise serializers.ValidationError(
-                'Поле не может быть пустым, загрузите файл.'
-            )
-        return avatar
-
 
 class ShortRecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Recipe для списка подписок."""
