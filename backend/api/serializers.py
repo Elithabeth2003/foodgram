@@ -209,7 +209,7 @@ class RecipeCreateSerializer(BaseRecipeSerializer):
     """Сериализатор для создания рецепта с использованием id."""
 
     ingredients = RecipeIngredientCreateSerializer(many=True)
-    tags = serializers.PriamryKeyRelatedField(
+    tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(), many=True
     )
     image = Base64ImageField(required=True)
