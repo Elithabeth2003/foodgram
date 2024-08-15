@@ -115,33 +115,70 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'measurement_unit', 'amount')
 
 
-class RecipeSerializer(serializers.ModelSerializer):
+class BaseRecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Recipe."""
 
     ingredients = RecipeIngredientSerializer(many=True)
-    author = UserSerializer(read_only=True)
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(), many=True
     )
-    is_favorited = serializers.SerializerMethodField()
-    is_in_shopping_cart = serializers.SerializerMethodField()
     image = Base64ImageField(required=True)
 
     class Meta:
         model = Recipe
         fields = (
-            'id',
             'name',
-            'author',
             'ingredients',
             'tags',
             'text',
             'image',
             'cooking_time',
+        )
+
+
+class RecipeRetrieveSerializer(BaseRecipeSerializer):
+    """Сериализатор для получения рецепта с использованием slug."""
+
+    author = UserSerializer(read_only=True)
+    is_favorited = serializers.SerializerMethodField()
+    is_in_shopping_cart = serializers.SerializerMethodField()
+
+    class Meta(BaseRecipeSerializer.Meta):
+        model = Recipe
+        fields = (
+            'slug_for_short_url',
+            'author',
             'is_favorited',
             'is_in_shopping_cart'
         )
-        read_only_fields = ('id', 'author', 'pub_date')
+        read_only_fields = ('slug_for_short_url', 'author', 'pub_date')
+
+    def get_is_favorited(self, recipe):
+        """Проверяет, добавлен ли рецепт в избранное пользователем."""
+        user = self.context.get('request').user
+        return (
+            user.is_authenticated
+            and recipe.favorites.filter(user=user).exists()
+        )
+
+    def get_is_in_shopping_cart(self, recipe):
+        """Проверяет, добавлен ли рецепт в список покупок пользователем."""
+        user = self.context.get('request').user
+        return (
+            user.is_authenticated
+            and recipe.shoppingcarts.filter(user=user).exists()
+        )
+
+
+class RecipeCreateSerializer(BaseRecipeSerializer):
+    """Сериализатор для создания рецепта с использованием id."""
+
+    class Meta(BaseRecipeSerializer.Meta):
+        model = Recipe
+        fields = (
+            'id',
+        )
+        read_only_fields = ('id', 'author')
 
     def validate_image(self, value):
         """Проверяет, что поле изображение не пустое."""
@@ -229,19 +266,3 @@ class RecipeSerializer(serializers.ModelSerializer):
         self.set_ingredients(instance, ingredients_data)
         instance.tags.set(tags_data)
         return super().update(instance, validated_data)
-
-    def get_is_favorited(self, recipe):
-        """Проверяет, добавлен ли рецепт в избранное пользователем."""
-        user = self.context.get('request').user
-        return (
-            user.is_authenticated
-            and recipe.favorites.filter(user=user).exists()
-        )
-
-    def get_is_in_shopping_cart(self, recipe):
-        """Проверяет, добавлен ли рецепт в список покупок пользователем."""
-        user = self.context.get('request').user
-        return (
-            user.is_authenticated
-            and recipe.shoppingcarts.filter(user=user).exists()
-        )

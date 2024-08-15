@@ -26,7 +26,8 @@ from .permissions import ReadOnlyOrAuthor
 from .serializers import (
     AvatarSerializer,
     IngredientSerializer,
-    RecipeSerializer,
+    RecipeRetrieveSerializer,
+    RecipeCreateSerializer,
     SubscriptionsSerializer,
     TagSerializer,
 )
@@ -134,11 +135,16 @@ class RecipeViewSet(viewsets.ModelViewSet):
     """ViewSet для управления рецептами."""
 
     queryset = Recipe.objects.all().order_by('-pub_date')
-    serializer_class = RecipeSerializer
     filter_backends = (DjangoFilterBackend,)
     pagination_class = PaginatorWithLimit
     permission_classes = [ReadOnlyOrAuthor]
     filterset_class = RecipeFilter
+
+    def get_serializer_class(self):
+        """Возвращает соответствующий сериализатор для получения и создания."""
+        if self.action in ['retrieve', 'get_link']:
+            return RecipeRetrieveSerializer
+        return RecipeCreateSerializer
 
     @action(
         detail=True,
