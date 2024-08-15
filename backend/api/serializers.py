@@ -99,7 +99,7 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
     """Сериализатор для модели RecipeIngredient."""
 
     id = serializers.PrimaryKeyRelatedField(
-        source='ingredient.id', read_only=True
+        source='ingredient', read_only=True
     )
     name = serializers.CharField(
         source='ingredient.name', read_only=True
