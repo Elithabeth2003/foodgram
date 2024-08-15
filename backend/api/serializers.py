@@ -259,12 +259,12 @@ class RecipeCreateSerializer(BaseRecipeSerializer):
             for ingredient in ingredients
         )
 
-    def create(self, validated_data):
+    def create(self, initial_data):
         """Создаёт новый рецепт."""
         ingredients = self.initial_data.pop('ingredients')
         tags = self.initial_data.pop('tags')
 
-        recipe = Recipe.objects.create(**validated_data)
+        recipe = Recipe.objects.create(**initial_data)
         recipe.tags.set(tags)
         self.set_ingredients(recipe, ingredients)
 
