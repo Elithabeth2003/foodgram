@@ -106,7 +106,6 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
     measurement_unit = serializers.CharField(
         source='ingredient.measurement_unit', read_only=True
     )
-    amount = serializers.IntegerField()
 
     class Meta:
         model = RecipeIngredient
@@ -116,7 +115,9 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 class BaseRecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Recipe."""
 
-    ingredients = RecipeIngredientSerializer(many=True)
+    ingredients = RecipeIngredientSerializer(
+        source='ingredientinrecipe', many=True
+    )
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(), many=True
     )
