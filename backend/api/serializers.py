@@ -146,6 +146,7 @@ class RecipeRetrieveSerializer(BaseRecipeSerializer):
     class Meta(BaseRecipeSerializer.Meta):
         model = Recipe
         fields = (
+            *BaseRecipeSerializer.Meta.fields,
             'slug_for_short_url',
             'author',
             'is_favorited',
@@ -176,6 +177,7 @@ class RecipeCreateSerializer(BaseRecipeSerializer):
     class Meta(BaseRecipeSerializer.Meta):
         model = Recipe
         fields = (
+            *BaseRecipeSerializer.Meta.fields,
             'id',
         )
         read_only_fields = ('id', 'author')
