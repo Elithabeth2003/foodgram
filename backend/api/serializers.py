@@ -261,8 +261,8 @@ class RecipeCreateSerializer(BaseRecipeSerializer):
 
     def create(self, validated_data):
         """Создаёт новый рецепт."""
-        ingredients = self.initial_data.get('ingredients')
-        tags = self.initial_data.get('tags')
+        ingredients = self.initial_data.pop('ingredients')
+        tags = self.initial_data.pop('tags')
 
         recipe = Recipe.objects.create(**validated_data)
         recipe.tags.set(tags)
