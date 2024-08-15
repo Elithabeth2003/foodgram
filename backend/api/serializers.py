@@ -201,7 +201,7 @@ class RecipeCreateSerializer(BaseRecipeSerializer):
             )
         return value
 
-    @staticmethod
+    """@staticmethod
     def validate_items(items, model, field_name):
         existing_items = model.objects.filter(
             id__in=items
@@ -220,7 +220,7 @@ class RecipeCreateSerializer(BaseRecipeSerializer):
             )
 
     def validate(self, data):
-        """Проверяет поля теги и ингредиенты."""
+        """'Проверяет поля теги и ингредиенты.'"""
         tags = self.initial_data.get('tags')
         ingredients = self.initial_data.get('ingredients')
         ingredients_ids = [item['id'] for item in ingredients]
@@ -246,7 +246,7 @@ class RecipeCreateSerializer(BaseRecipeSerializer):
                     for key, value in invalid_ingredients.items()
                 }
             })
-        return data
+        return data"""
 
     def set_ingredients(self, recipe, ingredients):
         """Добавляет ингредиенты в промежуточную модель."""
@@ -261,8 +261,8 @@ class RecipeCreateSerializer(BaseRecipeSerializer):
 
     def create(self, validated_data):
         """Создаёт новый рецепт."""
-        ingredients = validated_data.pop('ingredients')
-        tags = validated_data.pop('tags')
+        ingredients = self.initial_data.get('ingredients')
+        tags = self.initial_data.get('tags')
 
         recipe = Recipe.objects.create(**validated_data)
         recipe.tags.set(tags)
