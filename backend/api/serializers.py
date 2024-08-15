@@ -122,6 +122,19 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'measurement_unit', 'amount')
 
 
+class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
+    """Сериализатор для создания ингредиентов."""
+
+    id = serializers.PrimaryKeyRelatedField(
+        queryset=Ingredient.objects.all()
+    )
+    amount = serializers.IntegerField()
+
+    class Meta:
+        model = RecipeIngredient
+        fields = ('id', 'amount')
+
+
 class BaseRecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Recipe."""
 
@@ -151,13 +164,23 @@ class RecipeRetrieveSerializer(BaseRecipeSerializer):
     """Сериализатор для получения рецепта с использованием slug."""
 
     author = UserSerializer(read_only=True)
+    tags = TagSerializer(read_only=True, many=True)
+    ingredients = RecipeIngredientSerializer(
+        source='recipeingredients', many=True, read_only=True
+    )
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
+    image = serializers.ImageField()
 
     class Meta(BaseRecipeSerializer.Meta):
         model = Recipe
         fields = (
-            *BaseRecipeSerializer.Meta.fields,
+            'name',
+            'ingredients',
+            'tags',
+            'text',
+            'image',
+            'cooking_time',
             'slug_for_short_url',
             'author',
             'is_favorited',
@@ -185,10 +208,21 @@ class RecipeRetrieveSerializer(BaseRecipeSerializer):
 class RecipeCreateSerializer(BaseRecipeSerializer):
     """Сериализатор для создания рецепта с использованием id."""
 
+    ingredients = RecipeIngredientCreateSerializer(many=True)
+    tags = serializers.PriamryKeyRelatedField(
+        queryset=Tag.objects.all(), many=True
+    )
+    image = Base64ImageField(required=True)
+
     class Meta(BaseRecipeSerializer.Meta):
         model = Recipe
         fields = (
-            *BaseRecipeSerializer.Meta.fields,
+            'name',
+            'ingredients',
+            'tags',
+            'text',
+            'image',
+            'cooking_time',
             'id',
         )
         read_only_fields = ('id', 'author')
@@ -201,7 +235,7 @@ class RecipeCreateSerializer(BaseRecipeSerializer):
             )
         return value
 
-    """@staticmethod
+    @staticmethod
     def validate_items(items, model, field_name):
         existing_items = model.objects.filter(
             id__in=items
@@ -220,7 +254,7 @@ class RecipeCreateSerializer(BaseRecipeSerializer):
             )
 
     def validate(self, data):
-        """'Проверяет поля теги и ингредиенты.'"""
+        """Проверяет поля теги и ингредиенты."""
         tags = self.initial_data.get('tags')
         ingredients = self.initial_data.get('ingredients')
         ingredients_ids = [item['id'] for item in ingredients]
@@ -246,7 +280,7 @@ class RecipeCreateSerializer(BaseRecipeSerializer):
                     for key, value in invalid_ingredients.items()
                 }
             })
-        return data"""
+        return data
 
     def set_ingredients(self, recipe, ingredients):
         """Добавляет ингредиенты в промежуточную модель."""
