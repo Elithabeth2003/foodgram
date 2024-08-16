@@ -109,13 +109,15 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
     """Сериализатор для модели RecipeIngredient."""
 
     id = serializers.PrimaryKeyRelatedField(
-        source='ingredient.id', read_only=True
+        source='ingredient', read_only=True
     )
-    name = serializers.CharField(
-        source='ingredient.name', read_only=True
+    name = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='name'
     )
-    measurement_unit = serializers.CharField(
-        source='ingredient.measurement_unit', read_only=True
+    measurement_unit = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='measurement_unit'
     )
 
     class Meta:
