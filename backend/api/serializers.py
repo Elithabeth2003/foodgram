@@ -185,7 +185,7 @@ class RecipeRetrieveSerializer(serializers.ModelSerializer):
 class RecipeCreateSerializer(serializers.ModelSerializer):
     """Сериализатор для создания рецепта с использованием id."""
 
-    ingredients = RecipeIngredientCreateSerializer(many=True)
+    ingredients = RecipeIngredientCreateSerializer()
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(), many=True
     )
