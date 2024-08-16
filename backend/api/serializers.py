@@ -18,6 +18,7 @@ class UserSerializer(DjoserUserSerializer):
 
     is_subscribed = serializers.SerializerMethodField()
     email = serializers.EmailField(required=True, allow_blank=False)
+    # без явного определения он не видит емейл
 
     class Meta(DjoserUserSerializer.Meta):
         fields = (
@@ -35,7 +36,7 @@ class UserSerializer(DjoserUserSerializer):
             ).exists()
         )
 
-    def create(self, validated_data):
+    def create(self, validated_data):  # он самостоятельно не хеширует пароль
         user = User(
             email=validated_data['email'],
             username=validated_data['username']
@@ -160,6 +161,11 @@ class RecipeRetrieveSerializer(serializers.ModelSerializer):
             'is_in_shopping_cart'
         )
         read_only_fields = ('slug_for_short_url', 'author', 'pub_date')
+
+    def to_representation(self, instance):
+        """Кастомизация выходных данных для рецепта."""
+        representation = super().to_representation(instance)
+        return representation
 
     def get_is_favorited(self, recipe):
         """Проверяет, добавлен ли рецепт в избранное пользователем."""
