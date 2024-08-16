@@ -202,8 +202,9 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'author')
 
     def to_representation(self, instance):
-        """Возвращает сериализованные данные для инстанса."""
-        return super().to_representation(instance)
+        """Возвращает данные сериализатора для GET-запроса."""
+        serializer = RecipeRetrieveSerializer(instance, context=self.context)
+        return serializer.data
 
     def validate_image(self, value):
         """Проверяет, что поле изображение не пустое."""
