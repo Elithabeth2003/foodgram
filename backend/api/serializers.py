@@ -126,7 +126,7 @@ class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
     """Сериализатор для создания ингредиентов."""
 
     id = serializers.PrimaryKeyRelatedField(
-        queryset=Ingredient.objects.all()
+        source='ingredient.id'
     )
     amount = serializers.IntegerField()
 
@@ -185,7 +185,7 @@ class RecipeRetrieveSerializer(serializers.ModelSerializer):
 class RecipeCreateSerializer(serializers.ModelSerializer):
     """Сериализатор для создания рецепта с использованием id."""
 
-    ingredients = serializers.SerializerMethodField()
+    ingredients = RecipeIngredientCreateSerializer(many=True)
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(), many=True
     )
@@ -203,10 +203,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             'id',
         )
         read_only_fields = ('id', 'author')
-
-    def get_ingredients(self, obj):
-        ingredients = RecipeIngredient.objects.filter(recipe=obj)
-        return RecipeIngredientCreateSerializer(ingredients, many=True).data
 
     def validate_image(self, value):
         """Проверяет, что поле изображение не пустое."""
@@ -278,8 +274,8 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         """Создаёт новый рецепт."""
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
-
-        recipe = Recipe.objects.create(**validated_data)
+        author = self.context.get('request').user
+        recipe = Recipe.objects.create(author=author, **validated_data)
         recipe.tags.set(tags)
         self.set_ingredients(recipe, ingredients)
 
