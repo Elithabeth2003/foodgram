@@ -268,6 +268,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """Создаёт новый рецепт."""
+        print(f"ДАННЫЕ: {validated_data}. Ингридиенты: {validated_data.get('ingredients')}")
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
         author = self.context.get('request').user
