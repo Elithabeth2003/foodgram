@@ -138,6 +138,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     pagination_class = PaginatorWithLimit
     permission_classes = [ReadOnlyOrAuthor]
+    filterset_class = RecipeFilter
 
     def get_serializer_class(self):
         """Возвращает соответствующий сериализатор для получения и создания."""
