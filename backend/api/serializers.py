@@ -39,7 +39,9 @@ class UserSerializer(DjoserUserSerializer):
     def create(self, validated_data):  # он самостоятельно не хеширует пароль
         user = User(
             email=validated_data['email'],
-            username=validated_data['username']
+            username=validated_data['username'],
+            first_name=validated_data['first_name'],
+            last_name=validated_data['last_name']
         )
         user.set_password(validated_data['password'])
         user.save()
@@ -112,10 +114,12 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
         source='ingredient', read_only=True
     )
     name = serializers.SlugRelatedField(
+        source='ingredient',
         read_only=True,
         slug_field='name'
     )
     measurement_unit = serializers.SlugRelatedField(
+        source='ingredient',
         read_only=True,
         slug_field='measurement_unit'
     )
