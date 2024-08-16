@@ -153,18 +153,18 @@ class RecipeRetrieveSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = (
+            'id',
             'name',
             'ingredients',
             'tags',
             'text',
             'image',
             'cooking_time',
-            'slug_for_short_url',
             'author',
             'is_favorited',
             'is_in_shopping_cart'
         )
-        read_only_fields = ('slug_for_short_url', 'author', 'pub_date')
+        read_only_fields = fields
 
     def get_is_favorited(self, recipe):
         """Проверяет, добавлен ли рецепт в избранное пользователем."""
