@@ -34,7 +34,7 @@ class UserSerializer(DjoserUserSerializer):
                 user=request.user, author=user
             ).exists()
         )
-    
+
     def create(self, validated_data):
         user = User(
             email=validated_data['email'],
@@ -126,7 +126,7 @@ class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
     """Сериализатор для создания ингредиентов."""
 
     id = serializers.PrimaryKeyRelatedField(
-        queryset=Ingredient.objects.all()
+        source='ingredient.id', read_only=True
     )
     amount = serializers.IntegerField()
 
@@ -261,8 +261,8 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         """Добавляет ингредиенты в промежуточную модель."""
         RecipeIngredient.objects.bulk_create(
             RecipeIngredient(
-                ingredient_id=ingredient.get('id'),
-                amount=ingredient.get('amount'),
+                ingredient_id=ingredient['id'],
+                amount=ingredient['amount'],
                 recipe=recipe,
             )
             for ingredient in ingredients
