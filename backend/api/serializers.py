@@ -135,42 +135,19 @@ class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
         fields = ('id', 'amount')
 
 
-class BaseRecipeSerializer(serializers.ModelSerializer):
-    """Сериализатор для модели Recipe."""
-
-    ingredients = serializers.SerializerMethodField()
-    tags = serializers.PrimaryKeyRelatedField(
-        queryset=Tag.objects.all(), many=True
-    )
-    image = Base64ImageField(required=True)
-
-    class Meta:
-        model = Recipe
-        fields = (
-            'name',
-            'ingredients',
-            'tags',
-            'text',
-            'image',
-            'cooking_time',
-        )
-
-    def get_ingredients(self, recipe):
-        ingredients = RecipeIngredient.objects.filter(recipe=recipe)
-        return RecipeIngredientSerializer(ingredients, many=True).data
-
-
-class RecipeRetrieveSerializer(BaseRecipeSerializer):
+class RecipeRetrieveSerializer(serializers.ModelSerializer):
     """Сериализатор для получения рецепта с использованием slug."""
 
     author = UserSerializer(read_only=True)
     tags = TagSerializer(read_only=True, many=True)
-    ingredients = serializers.SerializerMethodField()
+    ingredients = RecipeIngredientSerializer(
+        source='recipeingredients', many=True, read_only=True
+    )
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
     image = serializers.ImageField()
 
-    class Meta(BaseRecipeSerializer.Meta):
+    class Meta:
         model = Recipe
         fields = (
             'name',
@@ -185,10 +162,6 @@ class RecipeRetrieveSerializer(BaseRecipeSerializer):
             'is_in_shopping_cart'
         )
         read_only_fields = ('slug_for_short_url', 'author', 'pub_date')
-
-    def get_ingredients(self, obj):
-        ingredients = RecipeIngredient.objects.filter(recipe=obj)
-        return RecipeIngredientSerializer(ingredients, many=True).data
 
     def get_is_favorited(self, recipe):
         """Проверяет, добавлен ли рецепт в избранное пользователем."""
@@ -207,7 +180,7 @@ class RecipeRetrieveSerializer(BaseRecipeSerializer):
         )
 
 
-class RecipeCreateSerializer(BaseRecipeSerializer):
+class RecipeCreateSerializer(serializers.ModelSerializer):
     """Сериализатор для создания рецепта с использованием id."""
 
     ingredients = RecipeIngredientCreateSerializer(many=True)
@@ -216,7 +189,7 @@ class RecipeCreateSerializer(BaseRecipeSerializer):
     )
     image = Base64ImageField(required=True)
 
-    class Meta(BaseRecipeSerializer.Meta):
+    class Meta:
         model = Recipe
         fields = (
             'name',
