@@ -126,7 +126,7 @@ class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
     """Сериализатор для создания ингредиентов."""
 
     id = serializers.PrimaryKeyRelatedField(
-        source='ingredient.id', read_only=True
+        queryset=Ingredient.objects.all()
     )
     amount = serializers.IntegerField()
 
@@ -140,9 +140,7 @@ class RecipeRetrieveSerializer(serializers.ModelSerializer):
 
     author = UserSerializer(read_only=True)
     tags = TagSerializer(read_only=True, many=True)
-    ingredients = RecipeIngredientSerializer(
-        source='recipeingredients', many=True, read_only=True
-    )
+    ingredients = serializers.SerializerMethodField()
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
     image = serializers.ImageField()
@@ -162,6 +160,10 @@ class RecipeRetrieveSerializer(serializers.ModelSerializer):
             'is_in_shopping_cart'
         )
         read_only_fields = ('slug_for_short_url', 'author', 'pub_date')
+
+    def get_ingredients(self, obj):
+        ingredients = RecipeIngredient.objects.filter(recipe=obj)
+        return RecipeIngredientSerializer(ingredients, many=True).data
 
     def get_is_favorited(self, recipe):
         """Проверяет, добавлен ли рецепт в избранное пользователем."""
@@ -183,7 +185,7 @@ class RecipeRetrieveSerializer(serializers.ModelSerializer):
 class RecipeCreateSerializer(serializers.ModelSerializer):
     """Сериализатор для создания рецепта с использованием id."""
 
-    ingredients = RecipeIngredientCreateSerializer(many=True)
+    ingredients = serializers.SerializerMethodField()
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(), many=True
     )
@@ -201,6 +203,10 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             'id',
         )
         read_only_fields = ('id', 'author')
+
+    def get_ingredients(self, obj):
+        ingredients = RecipeIngredient.objects.filter(recipe=obj)
+        return RecipeIngredientCreateSerializer(ingredients, many=True).data
 
     def validate_image(self, value):
         """Проверяет, что поле изображение не пустое."""
