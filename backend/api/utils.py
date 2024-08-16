@@ -9,13 +9,14 @@ def generate_txt(ingredients, recipes):
         [
             f'Список покупок от {current_date}\n',
             'Рецепты:',
-            *[f'{index + 1}. '
-              f'{recipe}' for index, recipe in enumerate(recipes)],
+            *[f'{index}. {recipe}' for index, recipe in enumerate(
+                recipes, start=1
+            )],
             '\nПродукты:',
             *[
-                f'{index + 1}. {ingredient["name"].capitalize()}: '
+                f'{index}. {ingredient["name"].capitalize()}: '
                 f'{ingredient["amount"]} {ingredient["measurement"]}'
-                for index, ingredient in enumerate(ingredients)
+                for index, ingredient in enumerate(ingredients, start=1)
             ]
         ]
     )

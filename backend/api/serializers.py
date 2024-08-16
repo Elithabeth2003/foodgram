@@ -152,7 +152,6 @@ class RecipeRetrieveSerializer(serializers.ModelSerializer):
     )
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
-    image = serializers.ImageField()
 
     class Meta:
         model = Recipe
@@ -187,7 +186,7 @@ class RecipeRetrieveSerializer(serializers.ModelSerializer):
         )
 
 
-class RecipeCreateSerializer(serializers.ModelSerializer):
+class RecipeCreateAddSerializer(serializers.ModelSerializer):
     """Сериализатор для создания рецепта с использованием id."""
 
     ingredients = RecipeIngredientCreateSerializer(many=True)

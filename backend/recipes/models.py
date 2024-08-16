@@ -180,13 +180,6 @@ class Recipe(models.Model):
             MinValueValidator(MIN_COOKING_TIME)
         ]
     )
-    slug_for_short_url = models.CharField(
-        verbose_name='Слаг для короткой ссылки',
-        max_length=10,
-        unique=True,
-        blank=True,
-        null=True,
-    )
 
     class Meta:
         default_related_name = '%(class)ss'

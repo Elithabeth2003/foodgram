@@ -1,4 +1,3 @@
-import io
 from django.db.models import F, Sum
 from django.http import FileResponse
 from django.urls import reverse
@@ -27,7 +26,7 @@ from .serializers import (
     AvatarSerializer,
     IngredientSerializer,
     RecipeRetrieveSerializer,
-    RecipeCreateSerializer,
+    RecipeCreateAddSerializer,
     SubscriptionsSerializer,
     TagSerializer,
 )
@@ -144,7 +143,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """Возвращает соответствующий сериализатор для получения и создания."""
         if self.action in ['retrieve', 'get_link']:
             return RecipeRetrieveSerializer
-        return RecipeCreateSerializer
+        return RecipeCreateAddSerializer
 
     @action(
         detail=True,
@@ -177,13 +176,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
         ).values('name', measurement=F('measurement_unit')).annotate(
             amount=Sum('recipeingredients__amount')
         )
-        recipes = user.recipes.all()
-        txt_content = generate_txt(ingredients, recipes)
         return FileResponse(
-            io.StringIO(txt_content),
+            generate_txt(ingredients, user.recipes.all()),
             content_type='text/plain',
-            as_attachment=True,
-            filename=f'{TXT_FILENAME.replace(".pdf", ".txt")}'
+            filename=TXT_FILENAME
         )
 
     @staticmethod
