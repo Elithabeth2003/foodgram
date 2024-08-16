@@ -162,11 +162,6 @@ class RecipeRetrieveSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('slug_for_short_url', 'author', 'pub_date')
 
-    def to_representation(self, instance):
-        """Кастомизация выходных данных для рецепта."""
-        representation = super().to_representation(instance)
-        return representation
-
     def get_is_favorited(self, recipe):
         """Проверяет, добавлен ли рецепт в избранное пользователем."""
         user = self.context.get('request').user
@@ -205,6 +200,9 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             'id',
         )
         read_only_fields = ('id', 'author')
+
+    def to_representation(self, instance):
+        return RecipeRetrieveSerializer(instance, context=self.context).data
 
     def validate_image(self, value):
         """Проверяет, что поле изображение не пустое."""
