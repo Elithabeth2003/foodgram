@@ -259,7 +259,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         """Добавляет ингредиенты в промежуточную модель."""
         RecipeIngredient.objects.bulk_create(
             RecipeIngredient(
-                ingredient_id=ingredient['id'],
+                ingredient=ingredient['id'],
                 amount=ingredient['amount'],
                 recipe=recipe,
             )
