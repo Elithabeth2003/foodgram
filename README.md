@@ -89,5 +89,5 @@
     python manage.py runserver
     ```
 
-На сайт можно посмотреть вот здесь - [FOODGRAM](https://cooker.sytes.net/recipes).
+На сайт можно посмотреть здесь - [FOODGRAM](https://cooker.sytes.net/recipes).
 Здесь можно ознакомится с документацией - [DOCS](https://cooker.sytes.net/api/docs).
