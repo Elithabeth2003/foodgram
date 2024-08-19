@@ -88,4 +88,4 @@
     ```
 
 На сайт можно посмотреть вот здесь - [FOODGRAM](https://cooker.sytes.net/recipes).
-Здесь можно ознакомится с документацией - [DOCKS](https://cooker.sytes.net/api/docks).
+Здесь можно ознакомится с документацией - [DOCS](https://cooker.sytes.net/api/docs).
