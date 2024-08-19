@@ -215,7 +215,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
             'cooking_time',
             'id',
         )
-        read_only_fields = ('author')
+        read_only_fields = ('author',)
 
     def to_representation(self, instance):
         """Возвращает данные сериализатора для GET-запроса."""
