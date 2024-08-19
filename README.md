@@ -1,4 +1,5 @@
 # Foodgram
+![CI](https://github.com/Elithabeth2003/foodgram/actions/workflows/main.yml/badge.svg)
 
 ## Описание
 
@@ -85,3 +86,6 @@
     ```bash
     python manage.py runserver
     ```
+
+На сайт можно посмотреть вот здесь - [FOODGRAM](https://cooker.sytes.net/recipes).
+Здесь можно ознакомится с документацией - [DOCKS](https://cooker.sytes.net/api/docks).

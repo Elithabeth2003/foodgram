@@ -141,6 +141,15 @@ class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
         model = RecipeIngredient
         fields = ('id', 'amount')
 
+    def validate_amount(self, value):
+        """Проверяет, что количество ингредиента не меньше минимального."""
+        if value < MIN_INGREDIENT_AMOUNT:
+            raise serializers.ValidationError(
+                f'Количество продукта ({value}) '
+                f'меньше минимально допустимого ({MIN_INGREDIENT_AMOUNT}).'
+            )
+        return value
+
 
 class RecipeRetrieveSerializer(serializers.ModelSerializer):
     """Сериализатор для получения рецепта с использованием slug."""
@@ -186,7 +195,7 @@ class RecipeRetrieveSerializer(serializers.ModelSerializer):
         )
 
 
-class RecipeCreateAddSerializer(serializers.ModelSerializer):
+class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
     """Сериализатор для создания рецепта с использованием id."""
 
     ingredients = RecipeIngredientCreateSerializer(many=True)
@@ -253,18 +262,6 @@ class RecipeCreateAddSerializer(serializers.ModelSerializer):
             model=Tag,
             field_name='tags',
         )
-        invalid_ingredients = [
-            item.get('id') for item in ingredients
-            if int(item.get('amount')) < MIN_INGREDIENT_AMOUNT
-        ]
-        if invalid_ingredients:
-            raise serializers.ValidationError({
-                'ingredients': {
-                    key: f'Количество продукта ({value}) меньше минимально '
-                    f'допустимого ({MIN_INGREDIENT_AMOUNT}).'
-                    for key, value in invalid_ingredients.items()
-                }
-            })
         return data
 
     def set_ingredients(self, recipe, ingredients):

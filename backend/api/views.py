@@ -26,7 +26,7 @@ from .serializers import (
     AvatarSerializer,
     IngredientSerializer,
     RecipeRetrieveSerializer,
-    RecipeCreateAddSerializer,
+    RecipeCreateUpdateSerializer,
     SubscriptionsSerializer,
     TagSerializer,
 )
@@ -143,7 +143,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """Возвращает соответствующий сериализатор для получения и создания."""
         if self.action in ['retrieve', 'get_link']:
             return RecipeRetrieveSerializer
-        return RecipeCreateAddSerializer
+        return RecipeCreateUpdateSerializer
 
     @action(
         detail=True,
