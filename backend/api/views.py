@@ -112,7 +112,7 @@ class UserViewSet(djoser_views.UserViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TagViewSet(viewsets.ModelViewSet):
+class TagViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet для управления тегами."""
 
     queryset = Tag.objects.all()
@@ -186,7 +186,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         )
 
     @staticmethod
-    def shoppingcart_favorite_method(request, pk, model):
+    def shoppingcart_favorite_method(
+        request, pk, model, create_message, delete_message
+    ):
         recipe = get_object_or_404(Recipe, pk=pk)
         if request.method == 'POST':
             _, created = model.objects.get_or_create(
@@ -194,13 +196,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
             )
             if created:
                 return Response(
+                    {'create': create_message},
                     status=status.HTTP_201_CREATED
                 )
-            raise ValidationError('Этот рецепт уже в списке покупок.')
+            raise ValidationError('Этот рецепт уже в списке.')
         get_object_or_404(
             model, user=request.user, recipe=recipe
         ).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(
+            {'delete': delete_message},
+            status=status.HTTP_204_NO_CONTENT
+        )
 
     @action(
         detail=True,
@@ -211,7 +217,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def favorite(self, request, pk=None):
         """Добавляет рецепт в избранное или удаляет его из избранного."""
         return self.shoppingcart_favorite_method(
-            request, pk, Favorite
+            request, pk, Favorite,
+            create_message='Рецепт добавлен в избранное',
+            delete_message='Рецепт удален из избранного'
         )
 
     @action(
@@ -223,5 +231,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def shopping_cart(self, request, pk=None):
         """Добавляет рецепт в список покупок или удаляет его."""
         return self.shoppingcart_favorite_method(
-            request, pk, ShoppingCart
+            request, pk, ShoppingCart,
+            create_message='Рецепт добавлен в список покупок',
+            delete_message='Рецепт удален из списка покупок'
         )
