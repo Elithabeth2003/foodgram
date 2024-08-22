@@ -13,6 +13,16 @@ from recipes.models import (
 from recipes.constants import MIN_INGREDIENT_AMOUNT
 
 
+class AvatarSerializer(serializers.ModelSerializer):
+    """Сериализатор для аватара."""
+
+    avatar = Base64ImageField(required=True)
+
+    class Meta:
+        model = User
+        fields = ('avatar',)
+
+
 class UserSerializer(DjoserUserSerializer):
     """Сериализатор для создания и представления пользователей."""
 
@@ -22,9 +32,9 @@ class UserSerializer(DjoserUserSerializer):
 
     class Meta(DjoserUserSerializer.Meta):
         fields = (
-            *DjoserUserSerializer.Meta.fields,
             'is_subscribed',
             'avatar',
+            *DjoserUserSerializer.Meta.fields,
         )
 
     def get_is_subscribed(self, user):
@@ -46,16 +56,6 @@ class UserSerializer(DjoserUserSerializer):
         user.set_password(validated_data['password'])
         user.save()
         return user
-
-
-class AvatarSerializer(serializers.ModelSerializer):
-    """Сериализатор для аватара."""
-
-    avatar = Base64ImageField(required=True)
-
-    class Meta:
-        model = User
-        fields = ('avatar',)
 
 
 class ShortRecipeSerializer(serializers.ModelSerializer):

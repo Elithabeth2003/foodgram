@@ -40,6 +40,8 @@ class UserViewSet(djoser_views.UserViewSet):
     def get_permissions(self):
         if self.action == 'me':
             return [permissions.IsAuthenticated()]
+        if self.action in ['list', 'retrieve']:
+            return [permissions.AllowAny()]
         return super().get_permissions()
 
     @action(
