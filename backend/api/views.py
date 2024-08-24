@@ -3,7 +3,8 @@ from django.http import FileResponse
 from django.urls import reverse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from djoser import views as djoser_views
+from djoser.views import UserViewSet as DjoserUserViewSet
+from djoser.serializers import SetPasswordSerializer
 from rest_framework import permissions, status, viewsets
 from rest_framework.exceptions import ValidationError
 from rest_framework.decorators import action
@@ -29,18 +30,27 @@ from .serializers import (
     RecipeCreateUpdateSerializer,
     SubscriptionsSerializer,
     TagSerializer,
+    UserCreateSerializer,
+    UserSerializer
 )
 from .utils import generate_txt
 
 
-class UserViewSet(djoser_views.UserViewSet):
+class UserViewSet(DjoserUserViewSet):
     """ViewSet для управления пользователями."""
     pagination_class = PaginatorWithLimit
+
+    def get_serializer_class(self):
+        if self.action == 'set_password':
+            return SetPasswordSerializer
+        if self.request.method == 'GET':
+            return UserSerializer
+        return UserCreateSerializer
 
     def get_permissions(self):
         if self.action == 'me':
             return [permissions.IsAuthenticated()]
-        if self.action in ['list', 'retrieve']:
+        if self.action in ('list', 'retrieve'):
             return [permissions.AllowAny()]
         return super().get_permissions()
 
@@ -138,7 +148,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all().order_by('-pub_date')
     filter_backends = (DjangoFilterBackend,)
     pagination_class = PaginatorWithLimit
-    permission_classes = [ReadOnlyOrAuthor]
+    permission_classes = [
+        permissions.IsAuthenticatedOrReadOnly, ReadOnlyOrAuthor
+    ]
     filterset_class = RecipeFilter
 
     def get_serializer_class(self):

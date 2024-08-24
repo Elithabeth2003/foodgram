@@ -1,5 +1,8 @@
 from rest_framework import serializers
 from drf_extra_fields.fields import Base64ImageField
+from djoser.serializers import (
+    UserCreateSerializer as DjoserUserCreateSerializer
+)
 from djoser.serializers import UserSerializer as DjoserUserSerializer
 
 from recipes.models import (
@@ -16,19 +19,27 @@ from recipes.constants import MIN_INGREDIENT_AMOUNT
 class AvatarSerializer(serializers.ModelSerializer):
     """Сериализатор для аватара."""
 
-    avatar = Base64ImageField(required=True)
+    avatar = Base64ImageField()
 
     class Meta:
         model = User
         fields = ('avatar',)
 
 
+class UserCreateSerializer(DjoserUserCreateSerializer):
+    """Сериализатор для создания пользователей."""
+    email = serializers.EmailField()
+
+    class Meta(DjoserUserCreateSerializer.Meta):
+        fields = (
+            *DjoserUserCreateSerializer.Meta.fields,
+        )
+
+
 class UserSerializer(DjoserUserSerializer):
-    """Сериализатор для создания и представления пользователей."""
+    """Сериализатор для представления пользователей."""
 
     is_subscribed = serializers.SerializerMethodField()
-    email = serializers.EmailField(required=True, allow_blank=False)
-    # без явного определения он не видит емейл
 
     class Meta(DjoserUserSerializer.Meta):
         fields = (
@@ -45,17 +56,6 @@ class UserSerializer(DjoserUserSerializer):
                 user=request.user, author=user
             ).exists()
         )
-
-    def create(self, validated_data):  # он самостоятельно не хеширует пароль
-        user = User(
-            email=validated_data['email'],
-            username=validated_data['username'],
-            first_name=validated_data['first_name'],
-            last_name=validated_data['last_name']
-        )
-        user.set_password(validated_data['password'])
-        user.save()
-        return user
 
 
 class ShortRecipeSerializer(serializers.ModelSerializer):
@@ -231,6 +231,10 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def validate_items(items, model, field_name):
+        if not items:
+            raise serializers.ValidationError(
+                {field_name: f'Поле {field_name} не может быть пустым.'}
+            )
         existing_items = model.objects.filter(
             id__in=items
         ).values_list('id', flat=True)
