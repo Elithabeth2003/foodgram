@@ -255,6 +255,10 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         """Проверяет поля теги и ингредиенты."""
         tags = self.initial_data.get('tags')
         ingredients = self.initial_data.get('ingredients')
+        if not ingredients:
+            raise serializers.ValidationError(
+                'Поле "ingredients" не может быть пустым.'
+            )
         ingredients_ids = [item['id'] for item in ingredients]
         self.validate_items(
             ingredients_ids,

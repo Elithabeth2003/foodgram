@@ -31,7 +31,8 @@ from .serializers import (
     SubscriptionsSerializer,
     TagSerializer,
     UserCreateSerializer,
-    UserSerializer
+    UserSerializer,
+    ShortRecipeSerializer
 )
 from .utils import generate_txt
 
@@ -201,7 +202,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def shoppingcart_favorite_method(
-        request, pk, model, create_message, delete_message
+        request, pk, model, delete_message
     ):
         recipe = get_object_or_404(Recipe, pk=pk)
         if request.method == 'POST':
@@ -210,7 +211,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
             )
             if created:
                 return Response(
-                    {'create': create_message},
+                    ShortRecipeSerializer(
+                        get_object_or_404(Recipe, pk=pk)
+                    ).data,
                     status=status.HTTP_201_CREATED
                 )
             raise ValidationError('Этот рецепт уже в списке.')
@@ -232,7 +235,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """Добавляет рецепт в избранное или удаляет его из избранного."""
         return self.shoppingcart_favorite_method(
             request, pk, Favorite,
-            create_message='Рецепт добавлен в избранное',
             delete_message='Рецепт удален из избранного'
         )
 
@@ -246,6 +248,5 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """Добавляет рецепт в список покупок или удаляет его."""
         return self.shoppingcart_favorite_method(
             request, pk, ShoppingCart,
-            create_message='Рецепт добавлен в список покупок',
             delete_message='Рецепт удален из списка покупок'
         )
