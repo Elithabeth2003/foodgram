@@ -211,9 +211,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             )
             if created:
                 return Response(
-                    ShortRecipeSerializer(
-                        get_object_or_404(Recipe, pk=pk)
-                    ).data,
+                    ShortRecipeSerializer(recipe).data,
                     status=status.HTTP_201_CREATED
                 )
             raise ValidationError('Этот рецепт уже в списке.')
